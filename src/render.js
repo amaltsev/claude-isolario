@@ -6,7 +6,7 @@
 // paper grain over everything.
 
 import { Rng, hashString } from './rng.js';
-import { contours, smooth, lineLength } from './contour.js';
+import { contours, smooth } from './contour.js';
 import {
   windowAverager, RELIEF_FLAT, RELIEF_HILL, RELIEF_MOUNTAIN, COVER_FOREST, COVER_MARSH,
 } from './features.js';
@@ -255,16 +255,21 @@ export function renderSVG(island, { theme = THEME } = {}) {
     const size = style.size;
     const w = textWidth(str, size, style.spacing ?? 0);
     const mid = size * 0.3;
-    const options = [
-      [X + r + 3, Y + mid, 'start', 0],
-      [X - r - 3, Y + mid, 'end', 0.12],
-      [X + r, Y - r * 0.6, 'start', 0.18],
-      [X + r, Y + r + size * 0.6, 'start', 0.22],
-      [X - r, Y - r * 0.6, 'end', 0.28],
-      [X - r, Y + r + size * 0.6, 'end', 0.32],
-      [X, Y - r - 4, 'middle', 0.36],
-      [X, Y + r + size * 0.82, 'middle', 0.4],
-    ];
+    // Eight positions hard by the symbol, then eight more a little way off.
+    const options = [];
+    for (const [gap, penalty] of [[0, 0], [11, 0.6]]) {
+      const q = r + gap;
+      options.push(
+        [X + q + 3, Y + mid, 'start', penalty],
+        [X - q - 3, Y + mid, 'end', penalty + 0.12],
+        [X + q, Y - q * 0.6, 'start', penalty + 0.18],
+        [X + q, Y + q + size * 0.6, 'start', penalty + 0.22],
+        [X - q, Y - q * 0.6, 'end', penalty + 0.28],
+        [X - q, Y + q + size * 0.6, 'end', penalty + 0.32],
+        [X, Y - q - 4, 'middle', penalty + 0.36],
+        [X, Y + q + size * 0.82, 'middle', penalty + 0.4],
+      );
+    }
     let best = null;
     for (const [lx, ly, anchor, bias] of options) {
       const box = boxFor(lx, ly, w, size, anchor);
@@ -369,27 +374,41 @@ export function renderSVG(island, { theme = THEME } = {}) {
     const len = Math.hypot(ox, oy) || 1;
     pointLabel(X + (ox / len) * 4, Y + (oy / len) * 4, c.name, { size: 12, italic: true, fill: theme.seaInk }, { r: 3, prefer: [ox / len, oy / len], water: 1.5 });
   }
-  const areaLabel = (place, style, shifts, water) => {
+  // Area names sit on the feature if they can, else as near as will fit.
+  const spiral = [[0, 0]];
+  for (let ring = 1; ring <= 4; ring++) {
+    for (let k = 0; k < 8; k++) {
+      const a = (k * Math.PI) / 4 + ring * 0.4;
+      spiral.push([Math.cos(a) * ring * 16, Math.sin(a) * ring * 11]);
+    }
+  }
+  const areaLabel = (place, style, water) => {
     const size = style.size;
     const w = textWidth(place.name, size, style.spacing ?? 0);
-    for (const [dx, dy] of shifts) {
+    let best = null;
+    for (const [dx, dy] of spiral) {
       const X = px(place.x) + dx;
-      const Y = px(place.y) + dy;
+      const Y = px(place.y) + dy + size * 0.3;
       const box = boxFor(X, Y, w, size, 'middle');
+      if (!inFrame(box) || hits(box, 2)) continue;
       const dry = dryness(box);
-      if (!inFrame(box) || hits(box, 2) || (water ? dry > 0.12 : dry < 0.9)) continue;
-      occupied.push(box);
-      layers.labels.push(label(X, Y, place.name, { ...style, anchor: 'middle', halo: water ? theme.sea : theme.land }));
-      return true;
+      const wrong = water ? dry : 1 - dry;
+      if (wrong > 0.4) continue;
+      const cost = 3 * wrong + Math.hypot(dx, dy) / 40;
+      if (!best || cost < best.cost) best = { X, Y, box, cost };
     }
-    return false;
+    if (!best) return false;
+    occupied.push(best.box);
+    layers.labels.push(label(best.X, best.Y, place.name, { ...style, anchor: 'middle', halo: water ? theme.sea : theme.land }));
+    return true;
   };
-  const nudges = [[0, 0], [0, -14], [0, 14], [-24, 0], [24, 0], [-20, -14], [20, 14], [20, -14], [-20, 14], [0, -28], [0, 28]];
-  for (const b of island.bays) areaLabel(b, { size: 12, italic: true, fill: theme.seaInk }, nudges, true);
-  if (island.mere) areaLabel(island.mere, { size: 11, italic: true, fill: theme.seaInk }, [[0, 4]], true) ||
-    pointLabel(px(island.mere.x), px(island.mere.y), island.mere.name, { size: 11, italic: true, fill: theme.seaInk }, { r: 8 });
-  if (island.wood) areaLabel(island.wood, { size: 12, italic: true, spacing: 0.12, fill: '#4c5a2c' }, nudges, false);
-  if (island.marsh) areaLabel(island.marsh, { size: 11.5, italic: true, spacing: 0.1, fill: '#3f6357' }, nudges, false);
+  for (const b of island.bays) areaLabel(b, { size: 12, italic: true, fill: theme.seaInk }, true);
+  if (island.mere) {
+    areaLabel(island.mere, { size: 11, italic: true, fill: theme.seaInk }, true) ||
+      pointLabel(px(island.mere.x), px(island.mere.y), island.mere.name, { size: 11, italic: true, fill: theme.seaInk }, { r: 8 });
+  }
+  if (island.wood) areaLabel(island.wood, { size: 12, italic: true, spacing: 0.12, fill: '#4c5a2c' }, false);
+  if (island.marsh) areaLabel(island.marsh, { size: 11.5, italic: true, spacing: 0.1, fill: '#3f6357' }, false);
 
   // The sea's own name goes in the widest water left.
   {

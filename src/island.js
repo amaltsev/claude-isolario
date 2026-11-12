@@ -128,6 +128,23 @@ export function generateIsland(seed, { size = 200 } = {}) {
   });
   const capes = features.capes.slice(0, 2).map((c) => ({ ...c, quarter: quarter(c), ...lang.place('cape') }));
   const bays = features.bays.map((b) => ({ ...b, quarter: quarter(b), ...lang.place('bay') }));
+  // A crescent island's great bight: which way it opens, and whether one of
+  // the named bays lies in it.
+  let bight = null;
+  if (terrain.bite) {
+    const x = Math.round(terrain.bite.x);
+    const y = Math.round(terrain.bite.y);
+    const opensTo = bearing(x - cx, y - cy);
+    let bay = bays
+      .map((b) => ({ b, d: Math.hypot(b.x - x, b.y - y) }))
+      .filter(({ d }) => d < N * 0.17)
+      .sort((p, q) => p.d - q.d)[0]?.b ?? null;
+    if (!bay && terrain.ocean[y * N + x]) {
+      bay = { x, y, score: 0, quarter: quarter({ x, y }), ...lang.place('bay') };
+      bays.push(bay);
+    }
+    bight = { x, y, opensTo, bay };
+  }
   const wood = features.wood && { ...features.wood, quarter: quarter(features.wood), ...lang.place('wood') };
   const marsh = features.marsh && { ...features.marsh, quarter: quarter(features.marsh), ...lang.place('marsh') };
   const mere = features.mere && { ...features.mere, quarter: quarter(features.mere), ...lang.place('lake') };
@@ -167,6 +184,7 @@ export function generateIsland(seed, { size = 200 } = {}) {
     peaks,
     capes,
     bays,
+    bight,
     wood,
     marsh,
     mere,

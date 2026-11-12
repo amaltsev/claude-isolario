@@ -1,0 +1,3366 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Isolario</title>
+<style>
+:root {
+  color-scheme: light dark;
+  --desk: #e4dbc6;
+  --page: #f7f0de;
+  --ink: #2f241a;
+  --muted: #6d604d;
+  --rule: #cfc2a3;
+  --accent: #a23b2a;
+  --shadow: rgba(60, 40, 10, 0.28);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --desk: #1b1713;
+    --page: #29231c;
+    --ink: #eae0ca;
+    --muted: #a99b82;
+    --rule: #4b4135;
+    --accent: #df7b66;
+    --shadow: rgba(0, 0, 0, 0.6);
+  }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--desk);
+  color: var(--ink);
+  font: 17px/1.58 'IM Fell English', 'Palatino Linotype', Palatino, 'Book Antiqua', P052, 'URW Palladio L', Georgia, serif;
+}
+.entry {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  gap: 2rem;
+  max-width: 1560px;
+  margin: 0 auto;
+  padding: 1.5rem;
+  align-items: start;
+}
+.chart {
+  margin: 0;
+  position: sticky;
+  top: 1.5rem;
+  box-shadow: 0 1px 2px var(--shadow), 0 14px 36px var(--shadow);
+}
+.chart svg { display: block; width: 100%; height: auto; }
+.gazetteer {
+  background: var(--page);
+  border: 1px solid var(--rule);
+  padding: 2rem 2.3rem 2.4rem;
+}
+.gazetteer h1 {
+  margin: 0;
+  font-size: 1.65rem;
+  font-weight: normal;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  line-height: 1.25;
+  text-wrap: balance;
+}
+.gazetteer .subtitle { margin: 0.25rem 0 1.2rem; font-style: italic; color: var(--muted); }
+.facts {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.15rem 1.2rem;
+  margin: 0 0 1.3rem;
+  padding: 0.8rem 0;
+  border-block: 1px solid var(--rule);
+  font-size: 0.95rem;
+}
+.facts dt { font-variant: small-caps; letter-spacing: 0.06em; color: var(--muted); }
+.facts dd { margin: 0; font-variant-numeric: oldstyle-nums; overflow-wrap: anywhere; }
+.gazetteer h2 {
+  margin: 1.25rem 0 0.15rem;
+  font-size: 0.82rem;
+  font-weight: normal;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.gazetteer p { margin: 0; hyphens: auto; text-wrap: pretty; }
+@media (max-width: 920px) {
+  .entry { grid-template-columns: 1fr; padding: 1rem; gap: 1.2rem; }
+  .chart { position: static; }
+  .gazetteer { padding: 1.4rem 1.2rem 1.6rem; }
+}
+@media print {
+  body { background: none; }
+  .chart { box-shadow: none; position: static; }
+  .gazetteer { border: none; }
+}
+</style>
+<style>
+.masthead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.4rem 1.6rem;
+  max-width: 1560px;
+  margin: 0 auto;
+  padding: 1.4rem 1.5rem 0;
+}
+.masthead h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: normal;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+}
+.masthead p { margin: 0; font-style: italic; color: var(--muted); }
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  max-width: 1560px;
+  margin: 0 auto;
+  padding: 1rem 1.5rem 0;
+}
+.controls label { font-variant: small-caps; letter-spacing: 0.08em; color: var(--muted); }
+.controls input {
+  flex: 1 1 12rem;
+  min-width: 0;
+  max-width: 22rem;
+  padding: 0.45rem 0.7rem;
+  font: inherit;
+  color: var(--ink);
+  background: var(--page);
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+}
+.controls button {
+  padding: 0.45rem 0.95rem;
+  font: inherit;
+  color: var(--ink);
+  background: transparent;
+  border: 1px solid var(--muted);
+  border-radius: 2px;
+  cursor: pointer;
+}
+.controls button.primary { background: var(--ink); color: var(--page); border-color: var(--ink); }
+.controls button:hover { border-color: var(--accent); color: var(--accent); }
+.controls button.primary:hover { background: var(--accent); border-color: var(--accent); color: var(--page); }
+.controls input:focus-visible, .controls button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.controls .spacer { flex: 1 1 0; }
+.status { min-width: 5.5rem; font-style: italic; color: var(--muted); }
+.entry.busy { opacity: 0.45; transition: opacity 0.15s; }
+.colophon {
+  max-width: 1560px;
+  margin: 0 auto;
+  padding: 0 1.5rem 2rem;
+  font-size: 0.9rem;
+  font-style: italic;
+  color: var(--muted);
+}
+.colophon kbd { font: inherit; font-style: normal; border: 1px solid var(--rule); border-radius: 2px; padding: 0 0.3em; }
+@media (max-width: 920px) {
+  .masthead, .controls { padding-inline: 1rem; }
+  .colophon { padding-inline: 1rem; }
+  .controls .spacer { display: none; }
+}
+@media print { .masthead, .controls, .colophon { display: none; } }
+</style>
+</head>
+<body>
+<header class="masthead">
+  <h1>Isolario</h1>
+  <p>a book of islands that do not exist</p>
+</header>
+<form class="controls" id="controls">
+  <label for="seed">Seed</label>
+  <input id="seed" name="seed" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="any words at all">
+  <button class="primary" type="submit">Chart it</button>
+  <button type="button" id="another">Another island</button>
+  <span class="spacer"></span>
+  <span class="status" id="status" role="status" aria-live="polite"></span>
+  <button type="button" id="copy">Copy link</button>
+  <button type="button" id="save">Save chart</button>
+</form>
+<main class="entry" id="entry"></main>
+<footer class="colophon">
+  Every island is grown from its seed: the same words always give the same chart, the same towns, the same
+  wreck off the same shore. Press <kbd>n</kbd> for another island.
+</footer>
+<script>
+const Isolario = (() => {
+'use strict';
+const __modules = {};
+__modules["rng.js"] = (() => {
+// Seeded randomness. Everything in Isolario flows from one seed string, so the
+// same seed always yields the same island, down to the last tree.
+
+/** xmur3: turns a string into a stream of well-mixed 32-bit integers. */
+function hashString(str) {
+  let h = 1779033703 ^ str.length;
+  for (let i = 0; i < str.length; i++) {
+    h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
+    h = (h << 13) | (h >>> 19);
+  }
+  return () => {
+    h = Math.imul(h ^ (h >>> 16), 2246822507);
+    h = Math.imul(h ^ (h >>> 13), 3266489909);
+    return (h ^= h >>> 16) >>> 0;
+  };
+}
+
+class Rng {
+  constructor(seed) {
+    this.seed = String(seed);
+    const h = hashString(this.seed);
+    this.a = h();
+    this.b = h();
+    this.c = h();
+    this.d = h();
+    for (let i = 0; i < 12; i++) this.next();
+  }
+
+  /** sfc32: next unsigned 32-bit integer. */
+  next() {
+    const t = (((this.a + this.b) | 0) + this.d) | 0;
+    this.d = (this.d + 1) | 0;
+    this.a = this.b ^ (this.b >>> 9);
+    this.b = (this.c + (this.c << 3)) | 0;
+    this.c = (this.c << 21) | (this.c >>> 11);
+    this.c = (this.c + t) | 0;
+    return t >>> 0;
+  }
+
+  /** Uniform float in [0, 1). */
+  float() {
+    return this.next() / 4294967296;
+  }
+
+  /** Uniform float in [lo, hi). */
+  range(lo, hi) {
+    return lo + (hi - lo) * this.float();
+  }
+
+  /** Uniform integer in [lo, hi], inclusive at both ends. */
+  int(lo, hi) {
+    return lo + Math.floor(this.float() * (hi - lo + 1));
+  }
+
+  chance(p) {
+    return this.float() < p;
+  }
+
+  pick(list) {
+    return list[Math.floor(this.float() * list.length)];
+  }
+
+  /** Pick from [[item, weight], ...]. */
+  weighted(pairs) {
+    let total = 0;
+    for (const [, w] of pairs) total += w;
+    let r = this.float() * total;
+    for (const [item, w] of pairs) {
+      r -= w;
+      if (r < 0) return item;
+    }
+    return pairs[pairs.length - 1][0];
+  }
+
+  /** Roughly normal, mean 0 and standard deviation 1. */
+  gauss() {
+    let s = 0;
+    for (let i = 0; i < 6; i++) s += this.float();
+    return (s - 3) * Math.SQRT2;
+  }
+
+  /** Fisher-Yates, in place. */
+  shuffle(list) {
+    for (let i = list.length - 1; i > 0; i--) {
+      const j = Math.floor(this.float() * (i + 1));
+      [list[i], list[j]] = [list[j], list[i]];
+    }
+    return list;
+  }
+
+  /**
+   * An independent stream named by `label`. A fork depends only on the seed
+   * and the label, never on how much of the parent has been consumed, so
+   * changing one stage of generation cannot disturb another.
+   */
+  fork(label) {
+    return new Rng(`${this.seed}/${label}`);
+  }
+}
+
+return { hashString, Rng };
+})();
+__modules["noise.js"] = (() => {
+// 2D simplex noise and the fractal sums built on it.
+
+const F2 = 0.5 * (Math.sqrt(3) - 1);
+const G2 = (3 - Math.sqrt(3)) / 6;
+const GRADIENTS = 16;
+const GX = new Float64Array(GRADIENTS);
+const GY = new Float64Array(GRADIENTS);
+for (let i = 0; i < GRADIENTS; i++) {
+  const a = (2 * Math.PI * (i + 0.5)) / GRADIENTS;
+  GX[i] = Math.cos(a);
+  GY[i] = Math.sin(a);
+}
+
+/** Returns noise(x, y) in roughly [-1, 1], seeded from `rng`. */
+function makeNoise(rng) {
+  const p = new Uint8Array(256);
+  for (let i = 0; i < 256; i++) p[i] = i;
+  for (let i = 255; i > 0; i--) {
+    const j = rng.int(0, i);
+    const t = p[i];
+    p[i] = p[j];
+    p[j] = t;
+  }
+  const perm = new Uint8Array(512);
+  for (let i = 0; i < 512; i++) perm[i] = p[i & 255];
+
+  return function noise(x, y) {
+    const s = (x + y) * F2;
+    const i = Math.floor(x + s);
+    const j = Math.floor(y + s);
+    const t = (i + j) * G2;
+    const x0 = x - (i - t);
+    const y0 = y - (j - t);
+    const i1 = x0 > y0 ? 1 : 0;
+    const j1 = 1 - i1;
+    const x1 = x0 - i1 + G2;
+    const y1 = y0 - j1 + G2;
+    const x2 = x0 - 1 + 2 * G2;
+    const y2 = y0 - 1 + 2 * G2;
+    const ii = i & 255;
+    const jj = j & 255;
+    let n = 0;
+    let a = 0.5 - x0 * x0 - y0 * y0;
+    if (a > 0) {
+      const g = perm[ii + perm[jj]] % GRADIENTS;
+      a *= a;
+      n += a * a * (GX[g] * x0 + GY[g] * y0);
+    }
+    a = 0.5 - x1 * x1 - y1 * y1;
+    if (a > 0) {
+      const g = perm[ii + i1 + perm[jj + j1]] % GRADIENTS;
+      a *= a;
+      n += a * a * (GX[g] * x1 + GY[g] * y1);
+    }
+    a = 0.5 - x2 * x2 - y2 * y2;
+    if (a > 0) {
+      const g = perm[ii + 1 + perm[jj + 1]] % GRADIENTS;
+      a *= a;
+      n += a * a * (GX[g] * x2 + GY[g] * y2);
+    }
+    return 99.2 * n;
+  };
+}
+
+/** Fractal Brownian motion: octaves of noise, normalised back to [-1, 1]. */
+function fbm(noise, x, y, octaves = 5, lacunarity = 2, gain = 0.5) {
+  let sum = 0;
+  let amp = 1;
+  let norm = 0;
+  for (let o = 0; o < octaves; o++) {
+    // Offset each octave so their lattices do not line up at the origin.
+    sum += amp * noise(x + o * 17.31, y - o * 9.73);
+    norm += amp;
+    amp *= gain;
+    x *= lacunarity;
+    y *= lacunarity;
+  }
+  return sum / norm;
+}
+
+/** Ridged fractal in [0, 1]: sharp crests where the noise crosses zero. */
+function ridged(noise, x, y, octaves = 4, lacunarity = 2, gain = 0.5) {
+  let sum = 0;
+  let amp = 1;
+  let norm = 0;
+  for (let o = 0; o < octaves; o++) {
+    const r = 1 - Math.abs(noise(x - o * 31.7, y + o * 12.9));
+    sum += amp * r * r;
+    norm += amp;
+    amp *= gain;
+    x *= lacunarity;
+    y *= lacunarity;
+  }
+  return sum / norm;
+}
+
+return { makeNoise, fbm, ridged };
+})();
+__modules["terrain.js"] = (() => {
+// Terrain: a height field whose zero level is the sea. An island is a few
+// soft blobs, roughened by fractal noise, with a guard band that keeps the
+// land away from the edge of the sheet.
+
+const { makeNoise, fbm, ridged } = __modules["noise.js"];
+
+const SHAPES = ['round', 'long', 'crescent', 'twin', 'shattered'];
+const RELIEFS = ['lowland', 'downs', 'highland', 'alpine'];
+
+const smoothstep = (a, b, x) => {
+  const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
+  return t * t * (3 - 2 * t);
+};
+
+function shapeParams(shape, rng) {
+  switch (shape) {
+    case 'long':
+      return {
+        blobs: [{ x: 0, y: 0, rx: rng.range(0.74, 0.84), ry: rng.range(0.3, 0.38) }],
+        bites: [],
+        amp: 0.42,
+        freq: 1.7,
+        landFraction: rng.range(0.19, 0.25),
+      };
+    case 'crescent': {
+      const a = rng.range(0, 2 * Math.PI);
+      const r = rng.range(0.34, 0.44);
+      return {
+        blobs: [{ x: 0, y: 0, rx: 0.7, ry: rng.range(0.6, 0.7) }],
+        bites: [{ x: r * Math.cos(a), y: r * Math.sin(a), rx: 0.4, ry: 0.4, depth: 2.2 }],
+        amp: 0.4,
+        freq: 1.6,
+        landFraction: rng.range(0.19, 0.25),
+      };
+    }
+    case 'twin': {
+      const gap = rng.range(0.3, 0.38);
+      return {
+        blobs: [
+          { x: -gap, y: rng.range(-0.08, 0.08), rx: rng.range(0.38, 0.46), ry: rng.range(0.36, 0.44) },
+          { x: gap, y: rng.range(-0.08, 0.08), rx: rng.range(0.3, 0.4), ry: rng.range(0.3, 0.38) },
+        ],
+        bites: [],
+        amp: 0.42,
+        freq: 1.8,
+        landFraction: rng.range(0.2, 0.27),
+      };
+    }
+    case 'shattered':
+      return {
+        blobs: [{ x: 0, y: 0, rx: 0.74, ry: rng.range(0.58, 0.7) }],
+        bites: [],
+        amp: 0.95,
+        freq: 2.3,
+        landFraction: rng.range(0.16, 0.21),
+      };
+    default:
+      return {
+        blobs: [{ x: 0, y: 0, rx: 0.64, ry: rng.range(0.52, 0.64) }],
+        bites: [],
+        amp: 0.5,
+        freq: 1.5,
+        landFraction: rng.range(0.24, 0.31),
+      };
+  }
+}
+
+const RELIEF_PARAMS = {
+  lowland: { ridge: 0.5, feet: [240, 700] },
+  downs: { ridge: 1.1, feet: [700, 1800] },
+  highland: { ridge: 1.9, feet: [1800, 4200] },
+  alpine: { ridge: 2.8, feet: [4200, 8800] },
+};
+
+/** Label 4-connected regions where `test(i)` holds. Returns ids and sizes. */
+function components(N, test) {
+  const id = new Int32Array(N * N).fill(-1);
+  const sizes = [];
+  const stack = [];
+  for (let start = 0; start < N * N; start++) {
+    if (id[start] !== -1 || !test(start)) continue;
+    const label = sizes.length;
+    let size = 0;
+    id[start] = label;
+    stack.push(start);
+    while (stack.length) {
+      const i = stack.pop();
+      size++;
+      const x = i % N;
+      if (x > 0 && id[i - 1] === -1 && test(i - 1)) { id[i - 1] = label; stack.push(i - 1); }
+      if (x < N - 1 && id[i + 1] === -1 && test(i + 1)) { id[i + 1] = label; stack.push(i + 1); }
+      if (i >= N && id[i - N] === -1 && test(i - N)) { id[i - N] = label; stack.push(i - N); }
+      if (i < N * N - N && id[i + N] === -1 && test(i + N)) { id[i + N] = label; stack.push(i + N); }
+    }
+    sizes.push(size);
+  }
+  return { id, sizes };
+}
+
+function buildTerrain(rng, { size = 200 } = {}) {
+  const N = size;
+  const shape = rng.weighted([['round', 3], ['long', 3], ['crescent', 2], ['twin', 2], ['shattered', 2]]);
+  const relief = rng.weighted([['lowland', 2], ['downs', 3], ['highland', 3], ['alpine', 2]]);
+  const params = shapeParams(shape, rng.fork('shape'));
+  const heightNoise = makeNoise(rng.fork('height'));
+  const warpNoise = makeNoise(rng.fork('warp'));
+  const ridgeNoise = makeNoise(rng.fork('ridge'));
+  const theta = rng.range(0, Math.PI);
+  const cos = Math.cos(theta);
+  const sin = Math.sin(theta);
+
+  const h = new Float32Array(N * N);
+  for (let y = 0; y < N; y++) {
+    for (let x = 0; x < N; x++) {
+      const u = (x / (N - 1)) * 2 - 1;
+      const v = (y / (N - 1)) * 2 - 1;
+      // Warp the domain a little so the blobs lose their symmetry.
+      const wu = u + 0.16 * warpNoise(u * 1.1 + 5.2, v * 1.1 - 1.3);
+      const wv = v + 0.16 * warpNoise(u * 1.1 - 8.4, v * 1.1 + 3.9);
+      const ru = wu * cos + wv * sin;
+      const rv = -wu * sin + wv * cos;
+      let base = -Infinity;
+      for (const b of params.blobs) {
+        const d = Math.hypot((ru - b.x) / b.rx, (rv - b.y) / b.ry);
+        base = Math.max(base, 1 - d);
+      }
+      for (const b of params.bites) {
+        const d = Math.hypot((ru - b.x) / b.rx, (rv - b.y) / b.ry);
+        base -= b.depth * Math.max(0, 1 - d);
+      }
+      const rough = fbm(heightNoise, u * params.freq, v * params.freq, 6);
+      const edge = Math.max(Math.abs(u), Math.abs(v));
+      h[y * N + x] = base + params.amp * rough - 3 * smoothstep(0.74, 0.95, edge);
+    }
+  }
+
+  // Put the sea level where it leaves the chosen fraction of the sheet dry.
+  const sorted = Float32Array.from(h).sort();
+  const seaLevel = sorted[Math.floor((1 - params.landFraction) * (N * N - 1))];
+  for (let i = 0; i < N * N; i++) h[i] -= seaLevel;
+
+  // Drown specks of land, and fill puddles too small to be worth a name.
+  const landParts = components(N, (i) => h[i] > 0);
+  for (let i = 0; i < N * N; i++) {
+    if (h[i] > 0 && landParts.sizes[landParts.id[i]] < 8) h[i] = -0.02;
+  }
+  const waterParts = components(N, (i) => h[i] <= 0);
+  const oceanId = waterParts.id[0];
+  const ocean = new Uint8Array(N * N);
+  const lake = new Uint8Array(N * N);
+  for (let i = 0; i < N * N; i++) {
+    if (h[i] > 0) continue;
+    const part = waterParts.id[i];
+    if (part === oceanId) ocean[i] = 1;
+    else if (waterParts.sizes[part] < 14) h[i] = 0.01;
+    else lake[i] = 1;
+  }
+
+  // Elevation: the island swell, with ridged noise raising crests inland.
+  const { ridge, feet } = RELIEF_PARAMS[relief];
+  const elev = new Float32Array(N * N);
+  let elevMax = 0;
+  let landCells = 0;
+  for (let y = 0; y < N; y++) {
+    for (let x = 0; x < N; x++) {
+      const i = y * N + x;
+      if (h[i] <= 0) continue;
+      landCells++;
+      const u = (x / (N - 1)) * 2 - 1;
+      const v = (y / (N - 1)) * 2 - 1;
+      const r = ridged(ridgeNoise, u * 2.4, v * 2.4, 4);
+      elev[i] = h[i] * (0.5 + ridge * r * r);
+      if (elev[i] > elevMax) elevMax = elev[i];
+    }
+  }
+  for (let i = 0; i < N * N; i++) elev[i] /= elevMax;
+
+  // Real-world scale. Small sheets hold small islands: scale the summit so
+  // a ten-mile islet does not carry an alp.
+  const scaleRng = rng.fork('scale');
+  const widthMiles = Math.round(Math.exp(scaleRng.range(Math.log(16), Math.log(150))));
+  const sizeFactor = Math.min(1, 0.45 + widthMiles / 110);
+  const peakFeet = Math.round((scaleRng.range(feet[0], feet[1]) * sizeFactor) / 10) * 10;
+
+  // Where a crescent's bight was bitten out, back in lattice coordinates.
+  const [firstBite] = params.bites;
+  const bite = firstBite
+    ? {
+      x: ((firstBite.x * cos - firstBite.y * sin + 1) / 2) * (N - 1),
+      y: ((firstBite.x * sin + firstBite.y * cos + 1) / 2) * (N - 1),
+    }
+    : null;
+
+  return {
+    N,
+    shape,
+    relief,
+    bite,
+    h,
+    elev, // 0..1 on land, 0 on water
+    ocean,
+    lake,
+    landCells,
+    peakFeet,
+    widthMiles,
+    milesPerCell: widthMiles / (N - 1),
+  };
+}
+
+return { SHAPES, RELIEFS, smoothstep, components, buildTerrain };
+})();
+__modules["contour.js"] = (() => {
+// Marching squares and polyline utilities. Fields are flat arrays of N×N
+// samples on a lattice; contour coordinates are in lattice units.
+
+// Cell edges: 0 top, 1 right, 2 bottom, 3 left. Each case lists edge pairs.
+const T = 0;
+const R = 1;
+const B = 2;
+const L = 3;
+const CASES = [
+  [], [[L, B]], [[B, R]], [[L, R]],
+  [[T, R]], null, [[T, B]], [[T, L]],
+  [[T, L]], [[T, B]], null, [[T, R]],
+  [[L, R]], [[B, R]], [[L, B]], [],
+];
+
+/**
+ * Trace the iso-lines of `field` at `level`. Returns a list of polylines,
+ * each an array of [x, y] with a boolean `closed` property and a `cell`
+ * property naming one lattice point just inside the line (value > level)
+ * and one just outside, as [insideIndex, outsideIndex].
+ */
+function contours(field, N, level = 0) {
+  // A crossing lives on a lattice edge. Horizontal edge from (x, y) has id
+  // 2 * (y * N + x); the vertical edge from (x, y) has that id plus one.
+  const links = new Int32Array(4 * N * N).fill(-1);
+  const edgeId = (x, y, side) => {
+    switch (side) {
+      case T: return 2 * (y * N + x);
+      case R: return 2 * (y * N + x + 1) + 1;
+      case B: return 2 * ((y + 1) * N + x);
+      default: return 2 * (y * N + x) + 1;
+    }
+  };
+  const link = (a, b) => {
+    links[2 * a + (links[2 * a] === -1 ? 0 : 1)] = b;
+    links[2 * b + (links[2 * b] === -1 ? 0 : 1)] = a;
+  };
+
+  for (let y = 0; y < N - 1; y++) {
+    for (let x = 0; x < N - 1; x++) {
+      const tl = field[y * N + x];
+      const tr = field[y * N + x + 1];
+      const br = field[(y + 1) * N + x + 1];
+      const bl = field[(y + 1) * N + x];
+      const index =
+        (tl > level ? 8 : 0) | (tr > level ? 4 : 0) | (br > level ? 2 : 0) | (bl > level ? 1 : 0);
+      let segments = CASES[index];
+      if (segments === null) {
+        // Saddle: let the cell centre decide which pair of corners connects.
+        const centreInside = (tl + tr + br + bl) / 4 > level;
+        const joinsTrBl = index === 5;
+        segments =
+          centreInside === joinsTrBl ? [[T, L], [B, R]] : [[T, R], [L, B]];
+      }
+      for (const [a, b] of segments) link(edgeId(x, y, a), edgeId(x, y, b));
+    }
+  }
+
+  const point = (id) => {
+    const cell = id >> 1;
+    const x = cell % N;
+    const y = (cell - x) / N;
+    const other = id & 1 ? cell + N : cell + 1;
+    const a = field[cell];
+    const b = field[other];
+    const t = (level - a) / (b - a);
+    return id & 1 ? [x, y + t] : [x + t, y];
+  };
+  const sides = (id) => {
+    const cell = id >> 1;
+    const other = id & 1 ? cell + N : cell + 1;
+    return field[cell] > level ? [cell, other] : [other, cell];
+  };
+
+  const visited = new Uint8Array(2 * N * N);
+  const lines = [];
+  const walk = (start) => {
+    const line = [];
+    let prev = -1;
+    let cur = start;
+    while (cur !== -1 && !visited[cur]) {
+      visited[cur] = 1;
+      line.push(point(cur));
+      const a = links[2 * cur];
+      const b = links[2 * cur + 1];
+      const next = a !== prev ? a : b;
+      prev = cur;
+      cur = next;
+    }
+    line.closed = cur === start;
+    line.cell = sides(start);
+    return line;
+  };
+  // Open lines first (they start at a dangling end), then closed loops.
+  for (let id = 0; id < 2 * N * N; id++) {
+    if (!visited[id] && links[2 * id] !== -1 && links[2 * id + 1] === -1) lines.push(walk(id));
+  }
+  for (let id = 0; id < 2 * N * N; id++) {
+    if (!visited[id] && links[2 * id] !== -1) lines.push(walk(id));
+  }
+  return lines;
+}
+
+/** Chaikin corner cutting. Open lines keep their endpoints. */
+function smooth(line, iterations = 1, closed = line.closed ?? false) {
+  let pts = line;
+  for (let it = 0; it < iterations; it++) {
+    const n = pts.length;
+    if (n < 3) break;
+    const out = [];
+    const last = closed ? n : n - 1;
+    if (!closed) out.push(pts[0]);
+    for (let i = 0; i < last; i++) {
+      const [ax, ay] = pts[i];
+      const [bx, by] = pts[(i + 1) % n];
+      out.push([0.75 * ax + 0.25 * bx, 0.75 * ay + 0.25 * by]);
+      out.push([0.25 * ax + 0.75 * bx, 0.25 * ay + 0.75 * by]);
+    }
+    if (!closed) out.push(pts[n - 1]);
+    pts = out;
+  }
+  if (pts !== line) {
+    pts.closed = closed;
+    if (line.cell) pts.cell = line.cell;
+  }
+  return pts;
+}
+
+/** Length of a polyline, including the closing segment when closed. */
+function lineLength(line, closed = line.closed ?? false) {
+  let total = 0;
+  const n = line.length;
+  const last = closed ? n : n - 1;
+  for (let i = 0; i < last; i++) {
+    const a = line[i];
+    const b = line[(i + 1) % n];
+    total += Math.hypot(b[0] - a[0], b[1] - a[1]);
+  }
+  return total;
+}
+
+/** Signed area of a closed polyline (shoelace). */
+function polygonArea(line) {
+  let sum = 0;
+  for (let i = 0, n = line.length; i < n; i++) {
+    const a = line[i];
+    const b = line[(i + 1) % n];
+    sum += a[0] * b[1] - b[0] * a[1];
+  }
+  return sum / 2;
+}
+
+return { contours, smooth, lineLength, polygonArea };
+})();
+__modules["hydrology.js"] = (() => {
+// Hydrology: where the rain goes. Depressions are filled with a priority
+// flood from the sea, every cell drains to its steepest lower neighbour, and
+// cells that collect enough flow become rivers.
+
+class MinHeap {
+  constructor() {
+    this.keys = [];
+    this.ids = [];
+  }
+  get size() {
+    return this.ids.length;
+  }
+  push(key, id) {
+    const { keys, ids } = this;
+    let i = ids.length;
+    keys.push(key);
+    ids.push(id);
+    while (i > 0) {
+      const p = (i - 1) >> 1;
+      if (keys[p] <= key) break;
+      keys[i] = keys[p];
+      ids[i] = ids[p];
+      i = p;
+    }
+    keys[i] = key;
+    ids[i] = id;
+  }
+  pop() {
+    const { keys, ids } = this;
+    const top = ids[0];
+    const key = keys.pop();
+    const id = ids.pop();
+    const n = ids.length;
+    if (n > 0) {
+      let i = 0;
+      for (;;) {
+        let c = 2 * i + 1;
+        if (c >= n) break;
+        if (c + 1 < n && keys[c + 1] < keys[c]) c++;
+        if (keys[c] >= key) break;
+        keys[i] = keys[c];
+        ids[i] = ids[c];
+        i = c;
+      }
+      keys[i] = key;
+      ids[i] = id;
+    }
+    return top;
+  }
+}
+
+const DX = [1, 1, 0, -1, -1, -1, 0, 1];
+const DY = [0, 1, 1, 1, 0, -1, -1, -1];
+const DIST = [1, Math.SQRT2, 1, Math.SQRT2, 1, Math.SQRT2, 1, Math.SQRT2];
+
+/** Call fn(neighbourIndex, direction) for the up-to-eight neighbours of i. */
+function eachNeighbour(N, i, fn) {
+  const x = i % N;
+  const y = (i - x) / N;
+  for (let d = 0; d < 8; d++) {
+    const nx = x + DX[d];
+    const ny = y + DY[d];
+    if (nx < 0 || ny < 0 || nx >= N || ny >= N) continue;
+    fn(ny * N + nx, d);
+  }
+}
+
+/**
+ * Drainage for a terrain. Returns:
+ *   filled  surface with every pit raised to its spill level
+ *   down    index each cell drains to (-1 for the open sea)
+ *   flux    number of cells draining through each cell, itself included
+ */
+function drainage(terrain) {
+  const { N, elev, ocean } = terrain;
+  const size = N * N;
+  const EPS = 1e-6;
+  const filled = new Float64Array(size);
+  const closed = new Uint8Array(size);
+  const parent = new Int32Array(size).fill(-1);
+  const heap = new MinHeap();
+
+  for (let i = 0; i < size; i++) {
+    if (!ocean[i]) continue;
+    closed[i] = 1;
+    let shore = false;
+    eachNeighbour(N, i, (n) => {
+      if (!ocean[n]) shore = true;
+    });
+    if (shore) heap.push(0, i);
+  }
+  const order = []; // non-ocean cells, lowest spill level first
+  while (heap.size) {
+    const c = heap.pop();
+    eachNeighbour(N, c, (n) => {
+      if (closed[n]) return;
+      closed[n] = 1;
+      filled[n] = Math.max(elev[n], filled[c] + EPS);
+      parent[n] = c;
+      order.push(n);
+      heap.push(filled[n], n);
+    });
+  }
+
+  const down = new Int32Array(size).fill(-1);
+  for (const i of order) {
+    let best = parent[i];
+    let bestSlope = 0;
+    eachNeighbour(N, i, (n, d) => {
+      const slope = (filled[i] - filled[n]) / DIST[d];
+      if (slope > bestSlope) {
+        bestSlope = slope;
+        best = n;
+      }
+    });
+    down[i] = best;
+  }
+
+  const flux = new Float32Array(size);
+  const byHeight = order.slice().sort((a, b) => filled[b] - filled[a]);
+  for (const i of byHeight) {
+    flux[i] += 1;
+    flux[down[i]] += flux[i];
+  }
+  return { filled, down, flux };
+}
+
+/**
+ * Trace rivers from their mouths upstream. Each river is
+ *   { cells, points, flux, mouth, into, parent }
+ * with points running from source to mouth in lattice units. `into` is
+ * 'sea', 'lake' or 'river'; `parent` is the index of the river it joins.
+ */
+function traceRivers(terrain, { down, flux }, rng) {
+  const { N, h, ocean, lake, landCells } = terrain;
+  const size = N * N;
+  const threshold = Math.min(180, Math.max(30, landCells * 0.013));
+  const isRiver = new Uint8Array(size);
+  for (let i = 0; i < size; i++) {
+    if (!ocean[i] && !lake[i] && flux[i] >= threshold) isRiver[i] = 1;
+  }
+  const upstream = new Map();
+  const mouths = [];
+  for (let i = 0; i < size; i++) {
+    if (!isRiver[i]) continue;
+    const d = down[i];
+    if (isRiver[d]) {
+      if (!upstream.has(d)) upstream.set(d, []);
+      upstream.get(d).push(i);
+    } else {
+      mouths.push(i);
+    }
+  }
+  mouths.sort((a, b) => flux[b] - flux[a]);
+
+  const xy = (i) => [i % N, Math.floor(i / N)];
+  // Wander off the lattice a little so rivers do not betray the grid.
+  // A cell keeps its wobble, so a tributary meets its parent exactly.
+  const wobbled = new Map();
+  const wobble = (i) => {
+    if (!wobbled.has(i)) {
+      const [x, y] = xy(i);
+      wobbled.set(i, [x + rng.range(-0.3, 0.3), y + rng.range(-0.3, 0.3)]);
+    }
+    return wobbled.get(i);
+  };
+
+  const rivers = [];
+  const riverOf = new Int32Array(size).fill(-1);
+  const pending = mouths.map((start) => ({ start, parent: -1 }));
+  while (pending.length) {
+    const { start, parent } = pending.shift();
+    const cells = [start];
+    const branches = [];
+    let c = start;
+    for (;;) {
+      const ups = upstream.get(c);
+      if (!ups) break;
+      ups.sort((a, b) => flux[b] - flux[a]);
+      for (let k = 1; k < ups.length; k++) branches.push(ups[k]);
+      c = ups[0];
+      cells.push(c);
+    }
+    // Drop twigs, and anything that hangs off a twig we dropped.
+    if (cells.length < (parent === -1 ? 5 : 4)) continue;
+
+    const index = rivers.length;
+    cells.reverse(); // source first
+    const points = cells.map(wobble);
+    const fluxes = cells.map((i) => flux[i]);
+    const source = cells[0];
+    // A river that begins at a lake outlet should be drawn from the lake.
+    let fromLake = false;
+    eachNeighbour(N, source, (n) => {
+      if (!fromLake && lake[n] && down[n] === source) {
+        points.unshift(xy(n));
+        fluxes.unshift(flux[source]);
+        fromLake = true;
+      }
+    });
+    const end = down[start];
+    const into = parent !== -1 ? 'river' : lake[end] ? 'lake' : 'sea';
+    // Run on to the cell it drains into; the renderer clips at the shore.
+    points.push(into === 'river' ? wobble(end) : xy(end));
+    fluxes.push(flux[start]);
+    // The mouth proper is where the last reach crosses the waterline.
+    const [ax, ay] = xy(start);
+    const [bx, by] = xy(end);
+    const t = into === 'river' ? 1 : h[start] / (h[start] - h[end]);
+    const mouth = [ax + t * (bx - ax), ay + t * (by - ay)];
+    for (const cell of cells) riverOf[cell] = index;
+    rivers.push({ cells, points, flux: fluxes, mouth, into, parent, fromLake });
+    for (const b of branches) pending.push({ start: b, parent: index });
+  }
+
+  // Keep the mask in step with what was actually kept.
+  for (let i = 0; i < size; i++) isRiver[i] = riverOf[i] !== -1 ? 1 : 0;
+  return { rivers, isRiver, riverOf, threshold };
+}
+
+/**
+ * Chamfer distance (in cells) from every cell to the nearest cell where
+ * `source[i]` is truthy. Cheap, and accurate to a few percent.
+ */
+function distanceField(N, source) {
+  const size = N * N;
+  const dist = new Float32Array(size).fill(1e9);
+  for (let i = 0; i < size; i++) if (source[i]) dist[i] = 0;
+  const A = 1;
+  const B = Math.SQRT2;
+  for (let y = 0; y < N; y++) {
+    for (let x = 0; x < N; x++) {
+      const i = y * N + x;
+      let d = dist[i];
+      if (x > 0) d = Math.min(d, dist[i - 1] + A);
+      if (y > 0) {
+        d = Math.min(d, dist[i - N] + A);
+        if (x > 0) d = Math.min(d, dist[i - N - 1] + B);
+        if (x < N - 1) d = Math.min(d, dist[i - N + 1] + B);
+      }
+      dist[i] = d;
+    }
+  }
+  for (let y = N - 1; y >= 0; y--) {
+    for (let x = N - 1; x >= 0; x--) {
+      const i = y * N + x;
+      let d = dist[i];
+      if (x < N - 1) d = Math.min(d, dist[i + 1] + A);
+      if (y < N - 1) {
+        d = Math.min(d, dist[i + N] + A);
+        if (x < N - 1) d = Math.min(d, dist[i + N + 1] + B);
+        if (x > 0) d = Math.min(d, dist[i + N - 1] + B);
+      }
+      dist[i] = d;
+    }
+  }
+  return dist;
+}
+
+return { MinHeap, eachNeighbour, drainage, traceRivers, distanceField };
+})();
+__modules["features.js"] = (() => {
+// Features: what a surveyor would note down. Ground cover, summits,
+// headlands and bays, all measured from the terrain and its rivers.
+
+const { makeNoise, fbm } = __modules["noise.js"];
+const { distanceField } = __modules["hydrology.js"];
+const { components } = __modules["terrain.js"];
+
+const RELIEF_FLAT = 0;
+const RELIEF_HILL = 1;
+const RELIEF_MOUNTAIN = 2;
+const COVER_BARE = 0;
+const COVER_FOREST = 1;
+const COVER_MARSH = 2;
+
+/** Summed-area table over a 0/1 mask, for fast window averages. */
+function windowAverager(N, mask) {
+  const W = N + 1;
+  const sat = new Float64Array(W * W);
+  for (let y = 0; y < N; y++) {
+    let row = 0;
+    for (let x = 0; x < N; x++) {
+      row += mask[y * N + x] ? 1 : 0;
+      sat[(y + 1) * W + x + 1] = sat[y * W + x + 1] + row;
+    }
+  }
+  /** Fraction of set cells in the square of radius r around (x, y). */
+  return (x, y, r) => {
+    const x0 = Math.max(0, x - r);
+    const y0 = Math.max(0, y - r);
+    const x1 = Math.min(N, x + r + 1);
+    const y1 = Math.min(N, y + r + 1);
+    const sum = sat[y1 * W + x1] - sat[y0 * W + x1] - sat[y1 * W + x0] + sat[y0 * W + x0];
+    return sum / ((x1 - x0) * (y1 - y0));
+  };
+}
+
+/** Greedily keep the best-scoring candidates that are at least `gap` apart. */
+function spaced(candidates, gap, limit) {
+  const kept = [];
+  for (const c of candidates.slice().sort((a, b) => b.score - a.score)) {
+    if (kept.length >= limit) break;
+    if (kept.every((k) => Math.hypot(k.x - c.x, k.y - c.y) >= gap)) kept.push(c);
+  }
+  return kept;
+}
+
+function buildFeatures(terrain, hydro, rng) {
+  const { N, h, elev, ocean, lake, peakFeet } = terrain;
+  const size = N * N;
+  const land = new Uint8Array(size);
+  const notOcean = new Uint8Array(size);
+  const wet = new Uint8Array(size);
+  for (let i = 0; i < size; i++) {
+    land[i] = h[i] > 0 ? 1 : 0;
+    notOcean[i] = ocean[i] ? 0 : 1;
+    wet[i] = hydro.isRiver[i] || lake[i] ? 1 : 0;
+  }
+  const coastDist = distanceField(N, ocean); // land: cells to the sea
+  const seaDist = distanceField(N, notOcean); // sea: cells to the shore
+  const freshDist = distanceField(N, wet); // cells to a river or lake
+  const landmass = components(N, (i) => land[i] === 1);
+
+  // Moisture: a climate bias for the whole island, patchy noise, wetter by
+  // fresh water and drier on the heights.
+  const noise = makeNoise(rng.fork('moisture'));
+  const climate = rng.range(-0.16, 0.16);
+  const relief = new Uint8Array(size);
+  const cover = new Uint8Array(size);
+  const moisture = new Float32Array(size);
+  const tally = { forest: 0, marsh: 0, hill: 0, mountain: 0 };
+  for (let y = 0; y < N; y++) {
+    for (let x = 0; x < N; x++) {
+      const i = y * N + x;
+      if (!land[i]) continue;
+      const u = (x / (N - 1)) * 2 - 1;
+      const v = (y / (N - 1)) * 2 - 1;
+      const m =
+        0.5 + climate + 0.5 * fbm(noise, u * 2.6, v * 2.6, 4) +
+        0.22 * Math.exp(-freshDist[i] / 4) - 0.25 * elev[i];
+      moisture[i] = m;
+      const feet = elev[i] * peakFeet;
+      if (feet >= 1500 && elev[i] >= 0.3) relief[i] = RELIEF_MOUNTAIN;
+      else if ((feet >= 450 && elev[i] >= 0.16) || elev[i] >= 0.42) relief[i] = RELIEF_HILL;
+      if (relief[i] === RELIEF_FLAT && elev[i] < 0.045 && m > 0.6 && (coastDist[i] < 7 || freshDist[i] < 3)) {
+        cover[i] = COVER_MARSH;
+      } else if (relief[i] !== RELIEF_MOUNTAIN && m > 0.57) {
+        cover[i] = COVER_FOREST;
+      }
+      if (relief[i] === RELIEF_MOUNTAIN) tally.mountain++;
+      else if (relief[i] === RELIEF_HILL) tally.hill++;
+      if (cover[i] === COVER_FOREST) tally.forest++;
+      else if (cover[i] === COVER_MARSH) tally.marsh++;
+    }
+  }
+  const fractions = {};
+  for (const key of Object.keys(tally)) fractions[key] = tally[key] / terrain.landCells;
+
+  // Summits: local maxima of elevation, the highest first.
+  const summitCandidates = [];
+  const R = 5;
+  for (let y = R; y < N - R; y++) {
+    for (let x = R; x < N - R; x++) {
+      const i = y * N + x;
+      const e = elev[i];
+      if (e < 0.3) continue;
+      let top = true;
+      for (let dy = -R; dy <= R && top; dy++) {
+        for (let dx = -R; dx <= R; dx++) {
+          if (elev[i + dy * N + dx] > e) { top = false; break; }
+        }
+      }
+      if (top) summitCandidates.push({ x, y, score: e, feet: Math.round((e * peakFeet) / 10) * 10 });
+    }
+  }
+  const summits = spaced(summitCandidates, N * 0.11, 3);
+
+  // Headlands and bays, from how much land lies within sight of the shore.
+  const landAround = windowAverager(N, land);
+  const capeCandidates = [];
+  const bayCandidates = [];
+  const mainland = landmass.sizes.indexOf(Math.max(...landmass.sizes));
+  for (let y = 2; y < N - 2; y++) {
+    for (let x = 2; x < N - 2; x++) {
+      const i = y * N + x;
+      if (land[i] && coastDist[i] <= 1.5 && landmass.sizes[landmass.id[i]] >= 150) {
+        // A cape is narrow nearby and still mostly sea from farther off.
+        const score = 1 - 0.5 * landAround(x, y, 5) - 0.5 * landAround(x, y, 11);
+        if (score > 0.64) capeCandidates.push({ x, y, score, mainland: landmass.id[i] === mainland });
+      } else if (ocean[i] && seaDist[i] >= 3 && seaDist[i] <= 8) {
+        // A bay is sea with land on most sides.
+        const score = landAround(x, y, 12);
+        if (score > 0.5) bayCandidates.push({ x, y, score: score + 0.02 * seaDist[i] });
+      }
+    }
+  }
+  const capes = spaced(capeCandidates, N * 0.2, 3);
+  const bays = spaced(bayCandidates, N * 0.2, 2);
+
+  // The largest wood, marsh and lake earn names of their own.
+  const largest = (mask, minimum) => {
+    const parts = components(N, (i) => mask(i));
+    let best = -1;
+    for (let k = 0; k < parts.sizes.length; k++) {
+      if (parts.sizes[k] >= minimum && (best === -1 || parts.sizes[k] > parts.sizes[best])) best = k;
+    }
+    if (best === -1) return null;
+    let sx = 0;
+    let sy = 0;
+    for (let i = 0; i < size; i++) {
+      if (parts.id[i] === best) { sx += i % N; sy += Math.floor(i / N); }
+    }
+    const cells = parts.sizes[best];
+    return { x: sx / cells, y: sy / cells, cells };
+  };
+  const wood = largest((i) => cover[i] === COVER_FOREST, 260);
+  const marsh = largest((i) => cover[i] === COVER_MARSH, 90);
+  const mere = largest((i) => lake[i] === 1, 14);
+
+  return {
+    land, coastDist, seaDist, freshDist, landmass, moisture, relief, cover,
+    fractions, summits, capes, bays, wood, marsh, mere, landAround,
+  };
+}
+
+return { RELIEF_FLAT, RELIEF_HILL, RELIEF_MOUNTAIN, COVER_BARE, COVER_FOREST, COVER_MARSH, windowAverager, spaced, buildFeatures };
+})();
+__modules["names.js"] = (() => {
+// Names. Each island speaks one invented tongue: a flavour of phonology,
+// thinned to a subset of its sounds so no two islands talk quite alike,
+// plus the stock words its people use for rivers, capes, towns and the rest.
+//
+// In templates, % stands for a freshly coined root. A % that follows a
+// letter is joined in lower case (Aber% -> Aberael); a leading "the" marks
+// a name that takes the article in prose but drops it on the chart.
+
+const FLAVOURS = {
+  aelic: {
+    onsets: ['l', 'n', 'r', 's', 'm', 'v', 'th', 'f', 'h', 'd', 't', 'br', 'gl', 'c', 'll', 'gw', 'cr', 'b', 'dr'],
+    nuclei: ['a', 'e', 'i', 'o', 'ae', 'ei', 'y', 'ia', 'u', 'wy'],
+    codas: ['n', 'r', 'l', 's', 'th', 'nn', 'rn', 'd', 'm', 'ch'],
+    codaChance: 0.4,
+    finalCodaChance: 0.75,
+    emptyOnset: 0.18,
+    syllables: [[1, 3], [2, 5], [3, 1]],
+    words: {
+      island: ['Inis %', '%', 'Isle of %', 'Ynys %'],
+      river: ['River %', 'Afon %', 'the % Water'],
+      peak: ['Ben %', 'Carn %', 'Mount %', 'Slieve %'],
+      hill: ['% Down', 'Knock%', 'Bryn %'],
+      cape: ['% Head', 'Pen %', 'Cape %', 'Rinn %'],
+      bay: ['% Bay', 'Cuan %', 'Loch %'],
+      lake: ['Loch %', 'Llyn %', 'Lough %'],
+      port: ['Port %', '%', 'Dun %', 'Bally%', 'Kil%', 'Caer %', 'Tre%'],
+      town: ['%', 'Llan%', 'Bally%', 'Rath %', 'Kil%', 'Tre%'],
+      mouth: ['Aber%', 'Inver%'],
+      wood: ['Coed %', '% Wood', 'the Forest of %'],
+      marsh: ['% Moss', 'the % Fens', 'Cors %'],
+      sea: ['the Sea of %', 'the % Sound', 'Muir %', 'the % Deeps'],
+    },
+  },
+  norn: {
+    onsets: ['sk', 'st', 'h', 'k', 'g', 'v', 'b', 'd', 't', 'f', 'th', 'r', 'n', 'm', 'hr', 'br', 'gr', 'sv', 'fl', 'tr', 'l'],
+    nuclei: ['a', 'o', 'u', 'e', 'i', 'y', 'ei', 'au', 'ö', 'å'],
+    codas: ['r', 'rn', 'ld', 'k', 'g', 'n', 'm', 'st', 'lf', 'rd', 'nd', 'rk', 'l'],
+    codaChance: 0.5,
+    finalCodaChance: 0.85,
+    emptyOnset: 0.12,
+    syllables: [[1, 5], [2, 4]],
+    words: {
+      island: ['%ey', '%holm', 'Isle of %', '%'],
+      river: ['River %', '% Water', '%elv'],
+      peak: ['%fjell', '%tind', 'Mount %', '%horn'],
+      hill: ['%haug', '% Fell', '%berg'],
+      cape: ['%ness', 'Cape %', '%odde', '% Skaw'],
+      bay: ['%vik', '% Bay', '%fjord', '% Voe'],
+      lake: ['%vatn', 'Lake %', '% Mere'],
+      port: ['%vik', '%havn', '%by', '%stad', '%', '%wick', '%sund'],
+      town: ['%by', '%stad', '%thorpe', '%dal', '%', '%garth'],
+      mouth: ['%os', '%mouth'],
+      wood: ['%skog', '% Wood', '%lund'],
+      marsh: ['%myr', '% Moss'],
+      sea: ['%hav', 'the % Sound', 'the Sea of %', 'the % Deeps'],
+    },
+  },
+  meridian: {
+    onsets: ['c', 'm', 'p', 'v', 't', 's', 'l', 'r', 'b', 'd', 'f', 'g', 'z', 'n', 'br', 'tr', 'gr', 'pr'],
+    nuclei: ['a', 'o', 'e', 'i', 'u', 'ia', 'io'],
+    codas: ['n', 'r', 'l', 's'],
+    codaChance: 0.25,
+    finalCodaChance: 0,
+    emptyOnset: 0.15,
+    syllables: [[2, 5], [3, 4]],
+    endings: ['a', 'o', 'a', 'o', 'ia', 'ino', 'ara', 'etta', 'ona', 'eo', 'ano', 'ese'],
+    words: {
+      island: ['Isola %', '%', 'Isla %'],
+      river: ['Rio %', 'River %', 'Fiume %'],
+      peak: ['Monte %', 'Pico %', 'Mount %', 'Serra %'],
+      hill: ['Colle %', 'Poggio %'],
+      cape: ['Capo %', 'Punta %', 'Cape %'],
+      bay: ['Baia di %', 'Golfo di %', 'Cala %'],
+      lake: ['Lago %', 'Lago di %'],
+      port: ['Porto %', '%', 'Santa %', 'San %', 'Marina di %', 'Villa %'],
+      town: ['%', 'Castel %', 'San %', 'Borgo %', 'Torre %'],
+      mouth: ['Bocca di %', 'Foce %'],
+      wood: ['Bosco %', 'Selva %'],
+      marsh: ['Palude %', 'Salina %'],
+      sea: ['Mare %', 'Mar di %', 'the % Sea', 'Golfo %'],
+    },
+  },
+  karst: {
+    onsets: ['k', 'z', 'v', 'd', 'g', 'b', 'm', 'n', 'r', 'st', 'kr', 'dr', 'zh', 'sh', 'br', 'vl', 't', 's', 'p', 'l', 'sl', 'gr'],
+    nuclei: ['a', 'o', 'e', 'i', 'u'],
+    codas: ['k', 'n', 'v', 'r', 'sk', 'sh', 't', 'z', 'm', 'l', 'd'],
+    codaChance: 0.35,
+    finalCodaChance: 0.8,
+    emptyOnset: 0.1,
+    syllables: [[1, 3], [2, 5]],
+    words: {
+      island: ['Ostrov %', '%', '% Island'],
+      river: ['% Reka', 'River %'],
+      peak: ['% Gora', 'Mount %', '% Vrh', 'Velika %'],
+      hill: ['% Brdo', '% Hill'],
+      cape: ['Rt %', 'Cape %', '% Nos'],
+      bay: ['Zaliv %', '% Bay', 'Uvala %'],
+      lake: ['% Jezero', 'Lake %'],
+      port: ['%grad', '%', '%ovo', 'Novi %', '%ica', 'Stari %', '%sk'],
+      town: ['%ovo', '%ica', '%grad', '%', '%ik', '%ovac'],
+      mouth: ['Ust-%', 'Usti %'],
+      wood: ['% Les', '% Wood', '% Gaj'],
+      marsh: ['% Blato', 'the % Mire'],
+      sea: ['% More', 'the % Sea', 'the Sea of %'],
+    },
+  },
+  polyn: {
+    onsets: ['k', 'h', 'l', 'm', 'n', 'p', 't', 'w', 'r', 'v', 'f'],
+    nuclei: ['a', 'e', 'i', 'o', 'u', 'ai', 'au', 'oa', 'ua', 'ei'],
+    codas: [],
+    codaChance: 0,
+    finalCodaChance: 0,
+    emptyOnset: 0.25,
+    syllables: [[2, 4], [3, 5], [4, 1]],
+    words: {
+      island: ['%', 'Motu %', '% Atoll'],
+      river: ['Wai%', '% Stream', 'River %'],
+      peak: ['Mauna %', 'Mount %', 'Puu %'],
+      hill: ['Puu %', '% Hill'],
+      cape: ['Lae %', '% Point', 'Cape %'],
+      bay: ['% Bay', 'Hana%', '% Lagoon'],
+      lake: ['Roto %', 'Lake %'],
+      port: ['%', 'Hana%', '% Landing', 'Port %'],
+      town: ['%', 'Kai%', '% Village'],
+      mouth: ['Waha%', 'Nuku%'],
+      wood: ['Wao %', '% Forest'],
+      marsh: ['Repo %', '% Swamp'],
+      sea: ['Moana %', 'the % Sea', 'the % Passage'],
+    },
+  },
+  saxon: {
+    onsets: ['b', 'br', 'c', 'cr', 'd', 'dr', 'f', 'g', 'gr', 'h', 'l', 'm', 'n', 'p', 'r', 's', 'st', 't', 'th', 'w', 'wh', 'sh'],
+    nuclei: ['a', 'e', 'i', 'o', 'u', 'y', 'ea', 'ai', 'ow', 'oo'],
+    codas: ['n', 'r', 'l', 'm', 'ck', 'th', 'sh', 'rn', 'ld', 'st', 'ng', 'x', 'd', 't', 'rk', 'll'],
+    codaChance: 0.3,
+    finalCodaChance: 0.95,
+    emptyOnset: 0.14,
+    syllables: [[1, 7], [2, 1]],
+    words: {
+      island: ['%sey', 'Isle of %', '% Island', '%holm', 'Great %'],
+      river: ['River %', '% Water', 'the % Brook'],
+      peak: ['Mount %', '% Pike', '% Tor', '% Beacon', '% Crag'],
+      hill: ['% Down', '% Hill', '% Knoll', '% Tor'],
+      cape: ['% Head', '% Point', 'Cape %', '% Ness', '% Bill'],
+      bay: ['% Bay', '% Cove', '% Haven', '% Roads'],
+      lake: ['% Mere', '% Water', 'Lake %', '% Tarn'],
+      port: ['%haven', '%port', '% Quay', '%wick', '%ton', '%by', 'Port %', '%combe', '% Regis', '%stow', '%ham'],
+      town: ['%ton', '%ham', '%ford', '%wick', '%stead', '%bury', '%field', '% Cross', 'Market %', '%thorpe'],
+      mouth: ['%mouth'],
+      wood: ['% Wood', '% Forest', '% Chase', '%wood'],
+      marsh: ['% Fen', '% Marsh', '% Levels', 'the % Moss'],
+      sea: ['the % Sea', 'the % Channel', '% Sound', 'the % Deeps', 'the % Roads'],
+    },
+  },
+};
+
+const FLAVOUR_NAMES = Object.keys(FLAVOURS);
+
+const VOWELS = 'aeiouyöåw';
+const BLOCKED = [
+  'fuck', 'shit', 'cunt', 'dick', 'cock', 'piss', 'arse', 'anus', 'tit', 'fag', 'nig', 'rape',
+  'slut', 'twat', 'wank', 'cum', 'poo', 'pee', 'ass', 'sex', 'nazi', 'kkk', 'damn', 'turd',
+  'whor', 'porn', 'crap', 'dung', 'puke', 'kill', 'dead', 'die',
+];
+
+const SHIPS = [
+  'Marigold', 'Prudence', 'Albatross', 'Good Intent', 'Halcyon', 'Sparrowhawk', 'Constance',
+  'Lady Maud', 'Tern', 'Perseverance', 'Morning Star', 'Three Brothers', 'Unity', 'Sea Holly',
+  'Petrel', 'Fair Wind', 'Amity', 'Black Swan', 'Wanderer', 'Rosalind',
+];
+const COUNTS = ['Three', 'Five', 'Seven', 'Nine', 'Twelve'];
+const KINDRED = ['Sisters', 'Watchers', 'Sleepers', 'Brothers', 'Maidens', 'Pipers', 'Judges', 'Widows'];
+
+const capitalise = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+
+/**
+ * Thin a list to a random subset. Lists run from common sounds to rare, so
+ * weight falls with position; clusters are rarer still, and each island
+ * jitters the weights to get an accent of its own.
+ */
+function inventory(rng, list, keep) {
+  const weighted = list.map((item, position) => [
+    item,
+    (rng.range(0.35, 1.65) * (item.length > 1 ? 0.45 : 1)) / (position + 4),
+  ]);
+  const count = Math.max(3, Math.round(list.length * keep));
+  return rng.shuffle(weighted).slice(0, count);
+}
+
+function makeLanguage(rng, flavourName = rng.pick(FLAVOUR_NAMES)) {
+  const f = FLAVOURS[flavourName];
+  const onsets = inventory(rng, f.onsets, 0.62);
+  const nuclei = inventory(rng, f.nuclei, 0.65);
+  const codas = f.codas.length ? inventory(rng, f.codas, 0.6) : [];
+  const usedRoots = new Set();
+  const usedNames = new Set();
+  const usedTemplates = new Map();
+
+  const stockWords = new Set();
+  for (const templates of Object.values(f.words)) {
+    for (const t of templates) for (const w of t.toLowerCase().match(/[a-zöå]+/g) ?? []) stockWords.add(w);
+  }
+
+  const syllable = (first, last) => {
+    const onset = first && rng.chance(f.emptyOnset) ? '' : rng.weighted(onsets);
+    const nucleus = rng.weighted(nuclei);
+    const coda = codas.length && rng.chance(last ? f.finalCodaChance : f.codaChance) ? rng.weighted(codas) : '';
+    return [onset + nucleus, coda];
+  };
+
+  const acceptable = (word, maxLength) => {
+    if (word.length < 3 || word.length > maxLength || stockWords.has(word)) return false;
+    if (/[^aeiouyöåw]{4,}/.test(word)) return false;
+    if (/(.)\1\1/.test(word) || /[aeiouyöå]{3,}/.test(word)) return false;
+    if (/(..)\1\1/.test(word)) return false;
+    if (/^(.{2,3})\1/.test(word) && flavourName !== 'polyn') return false;
+    if (!/[aeiouyöå]/.test(word)) return false;
+    const plain = word.replace(/ö/g, 'o').replace(/å/g, 'a');
+    if (BLOCKED.some((b) => plain.includes(b))) return false;
+    for (const used of usedRoots) {
+      if (used.slice(0, 3) === word.slice(0, 3)) return false;
+    }
+    return true;
+  };
+
+  /** Coin a new root, unlike any this island has used before. */
+  const root = (maxLength = 8) => {
+    for (let attempt = 0; attempt < 400; attempt++) {
+      let count = rng.weighted(f.syllables);
+      if (attempt > 300) count++;
+      let word = '';
+      let echo = false;
+      const heads = new Set();
+      for (let k = 0; k < count; k++) {
+        const [head, coda] = syllable(k === 0, k === count - 1);
+        if (heads.has(head)) echo = true;
+        heads.add(head);
+        word += head + coda;
+      }
+      // Only the open-syllabled tongue is allowed to stutter (Fafa, Lulu).
+      if (echo && flavourName !== 'polyn') continue;
+      if (f.endings && rng.chance(0.55)) {
+        word = word.replace(/[aeiou]+$/, '') + rng.pick(f.endings);
+      }
+      if (!acceptable(word, attempt > 300 ? 12 : maxLength) && attempt < 399) continue;
+      usedRoots.add(word);
+      return capitalise(word);
+    }
+    return 'Nemo';
+  };
+
+  const fill = (template, rootWord) => {
+    let article = false;
+    let text = template;
+    if (text.startsWith('the ')) {
+      article = true;
+      text = text.slice(4);
+    }
+    const at = text.indexOf('%');
+    const joined = at > 0 && /[A-Za-z]/.test(text[at - 1]);
+    const suffixed = at + 1 < text.length && /[a-z]/.test(text[at + 1]);
+    let piece = joined ? rootWord.toLowerCase() : rootWord;
+    let before = text.slice(0, at);
+    let after = text.slice(at + 1);
+    if (joined) {
+      // Aber + ael, not Aber + rael: avoid doubling across the join.
+      const lastChar = before[before.length - 1].toLowerCase();
+      if (piece[0] === lastChar) piece = piece.slice(1);
+      if (VOWELS.includes(lastChar) && VOWELS.includes(piece[0]) && before.length > 3) before = before.slice(0, -1);
+    }
+    if (suffixed) {
+      const lastChar = piece[piece.length - 1];
+      if (after[0] === lastChar) after = after.slice(1);
+      else if (VOWELS.includes(lastChar) && VOWELS.includes(after[0]) && lastChar !== 'w') piece = piece.slice(0, -1);
+    }
+    return { name: before + piece + after, article };
+  };
+
+  /**
+   * Name a feature of the given kind. Pass `fromRoot` to derive the name
+   * from an existing root (a town at a river mouth takes the river's).
+   */
+  const place = (kind, fromRoot = null) => {
+    const templates = f.words[kind];
+    const seen = usedTemplates.get(kind) ?? new Map();
+    usedTemplates.set(kind, seen);
+    for (let attempt = 0; attempt < 60; attempt++) {
+      // Favour stock words this island has not yet leaned on.
+      const template = rng.weighted(templates.map((t) => [t, 1 / (1 + 3 * (seen.get(t) ?? 0))]));
+      // Roots that get welded to a stock word should be short.
+      const welded = /[A-Za-z]%|%[a-z]/.test(template);
+      const rootWord = fromRoot ?? root(welded ? 6 : 8);
+      const { name, article } = fill(template, rootWord);
+      if (usedNames.has(name) || name.length > 22) {
+        if (!fromRoot) usedRoots.delete(rootWord.toLowerCase());
+        continue;
+      }
+      usedNames.add(name);
+      seen.set(template, (seen.get(template) ?? 0) + 1);
+      return { name, root: rootWord, article, full: article ? `the ${name}` : name };
+    }
+    const fallback = fromRoot ?? root();
+    return { name: fallback, root: fallback, article: false, full: fallback };
+  };
+
+  /** Names for curiosities, which lean on plain English around a root. */
+  const site = (kind) => {
+    const r = () => root(7);
+    let text;
+    switch (kind) {
+      case 'light':
+        text = rng.pick(['the % Light', '% Beacon', 'the Old Light', '% Lantern']);
+        break;
+      case 'ruin':
+        text = rng.pick(['Ruins of %', '% Abbey', 'Old %', '% Priory', 'the % Keep']);
+        break;
+      case 'stones':
+        text = rng.chance(0.6)
+          ? `the ${rng.pick(COUNTS)} ${rng.pick(KINDRED)}`
+          : rng.pick(['the % Stones', 'the % Ring', '% Barrow']);
+        break;
+      case 'hermitage':
+        text = rng.pick(["St %'s Cell", 'Hermitage of St %', "St %'s Well", "St %'s Chapel"]);
+        break;
+      case 'wreck':
+        text = `Wreck of the ${rng.pick(SHIPS)}`;
+        break;
+      case 'tower':
+        text = rng.pick(['% Tower', 'the % Watch', 'Fort %']);
+        break;
+      case 'mine':
+        text = rng.pick(['% Mine', 'the % Workings', '% Quarry']);
+        break;
+      default:
+        text = '%';
+    }
+    let article = false;
+    if (text.startsWith('the ')) {
+      article = true;
+      text = text.slice(4);
+    }
+    const name = text.includes('%') ? text.replace('%', r()) : text;
+    if (usedNames.has(name)) return site(kind);
+    usedNames.add(name);
+    return { name, root: null, article, full: article ? `the ${name}` : name };
+  };
+
+  return { flavour: flavourName, root, place, site };
+}
+
+return { FLAVOUR_NAMES, makeLanguage };
+})();
+__modules["settlements.js"] = (() => {
+// Settlements: where people would actually have built. Harbours in the
+// shelter of bays and at river mouths, a few places inland by fresh water,
+// the roads that join them, and the odd curiosity for the chart.
+
+const { MinHeap, eachNeighbour } = __modules["hydrology.js"];
+const { RELIEF_FLAT, RELIEF_MOUNTAIN, RELIEF_HILL, COVER_MARSH, COVER_FOREST, spaced } = __modules["features.js"];
+
+function placeTowns(terrain, hydro, features, rng) {
+  const { N, elev, landCells, widthMiles } = terrain;
+  const { land, coastDist, freshDist, landmass, relief, cover, landAround } = features;
+  const mouths = hydro.rivers
+    .map((r, index) => ({ r, index }))
+    .filter(({ r }) => r.into === 'sea')
+    .map(({ r, index }) => ({ x: r.mouth[0], y: r.mouth[1], flux: r.flux[r.flux.length - 1], index }));
+
+  const candidates = [];
+  for (let y = 3; y < N - 3; y++) {
+    for (let x = 3; x < N - 3; x++) {
+      const i = y * N + x;
+      if (!land[i] || cover[i] === COVER_MARSH || relief[i] === RELIEF_MOUNTAIN) continue;
+      if (hydro.isRiver[i]) continue;
+      const massSize = landmass.sizes[landmass.id[i]];
+      if (massSize < 40) continue;
+      const coastal = coastDist[i] <= 1.5;
+      const inland = coastDist[i] >= 9 && freshDist[i] <= 2 && relief[i] === RELIEF_FLAT;
+      if (!coastal && !inland) continue;
+      let score = rng.range(0, 0.25);
+      let river = -1;
+      if (coastal) {
+        // Shelter: a harbour wants land on about two sides of three.
+        const shelter = landAround(x, y, 7);
+        score += 1 - Math.abs(shelter - 0.62) * 2.2;
+        for (const m of mouths) {
+          const d = Math.hypot(m.x - x, m.y - y);
+          if (d < 3.5) {
+            score += 0.5 + 0.25 * Math.min(1, m.flux / (4 * hydro.threshold));
+            river = m.index;
+          }
+        }
+      } else {
+        score += 0.35;
+        river = hydro.riverOf[i];
+      }
+      score -= 2 * elev[i];
+      if (massSize < 400) score -= 0.5;
+      candidates.push({ x, y, score, coastal, river, mass: landmass.id[i] });
+    }
+  }
+
+  const count = Math.max(2, Math.min(7, Math.round(1.6 + landCells / 2600 + widthMiles / 55)));
+  const gap = Math.max(11, Math.sqrt(landCells) * 0.21);
+  const chosen = spaced(candidates, gap, count);
+
+  // Rank: the best site is the capital; the bottom third are villages.
+  return chosen.map((c, k) => ({
+    ...c,
+    rank: k === 0 ? 'capital' : k < Math.max(2, Math.ceil(chosen.length * 0.6)) ? 'town' : 'village',
+  }));
+}
+
+/**
+ * Roads: a minimum spanning tree over the towns of each landmass, each leg
+ * routed by A* over the terrain. Later legs prefer ground already trodden,
+ * so roads merge. Returns polylines in lattice units.
+ */
+function buildRoads(terrain, hydro, features, towns) {
+  const { N, elev, peakFeet } = terrain;
+  const { land, relief, cover } = features;
+  const size = N * N;
+  const trodden = new Uint8Array(size);
+  const steepness = 6 + peakFeet / 700;
+
+  const stepCost = (from, to, dist) => {
+    let cost = 1 + steepness * Math.abs(elev[to] - elev[from]) * 40 + 3 * elev[to];
+    if (relief[to] === RELIEF_MOUNTAIN) cost += 4;
+    else if (relief[to] === RELIEF_HILL) cost += 0.6;
+    if (cover[to] === COVER_MARSH) cost += 3;
+    else if (cover[to] === COVER_FOREST) cost += 0.3;
+    if (hydro.isRiver[to]) cost += 2.5; // a ford or a bridge
+    if (trodden[to]) cost *= 0.35;
+    return cost * dist;
+  };
+
+  const route = (start, goal) => {
+    const gx = goal % N;
+    const gy = Math.floor(goal / N);
+    const best = new Float32Array(size).fill(Infinity);
+    const from = new Int32Array(size).fill(-1);
+    const heap = new MinHeap();
+    best[start] = 0;
+    heap.push(0, start);
+    while (heap.size) {
+      const c = heap.pop();
+      if (c === goal) break;
+      const base = best[c];
+      eachNeighbour(N, c, (n, d) => {
+        if (!land[n]) return;
+        const g = base + stepCost(c, n, d % 2 ? Math.SQRT2 : 1);
+        if (g < best[n]) {
+          best[n] = g;
+          from[n] = c;
+          heap.push(g + 0.35 * Math.hypot((n % N) - gx, Math.floor(n / N) - gy), n);
+        }
+      });
+    }
+    if (from[goal] === -1) return null;
+    const path = [];
+    for (let c = goal; c !== -1; c = from[c]) path.push(c);
+    return path.reverse();
+  };
+
+  // Prim's algorithm per landmass, on straight-line distance.
+  const roads = [];
+  const byMass = new Map();
+  towns.forEach((t, index) => {
+    if (!byMass.has(t.mass)) byMass.set(t.mass, []);
+    byMass.get(t.mass).push(index);
+  });
+  for (const members of byMass.values()) {
+    const joined = [members[0]];
+    const waiting = members.slice(1);
+    while (waiting.length) {
+      let pick = null;
+      for (const a of joined) {
+        for (const b of waiting) {
+          const d = Math.hypot(towns[a].x - towns[b].x, towns[a].y - towns[b].y);
+          if (!pick || d < pick.d) pick = { a, b, d };
+        }
+      }
+      waiting.splice(waiting.indexOf(pick.b), 1);
+      joined.push(pick.b);
+      const path = route(towns[pick.a].y * N + towns[pick.a].x, towns[pick.b].y * N + towns[pick.b].x);
+      if (!path) continue;
+      // Keep only the newly broken ground, plus the cells where it joins.
+      let leg = [];
+      const flush = () => {
+        if (leg.length > 1) roads.push({ from: pick.a, to: pick.b, points: leg.map((c) => [c % N, Math.floor(c / N)]) });
+        leg = [];
+      };
+      for (let k = 0; k < path.length; k++) {
+        const c = path[k];
+        if (trodden[c]) {
+          if (leg.length) { leg.push(c); flush(); }
+        } else {
+          if (!leg.length && k > 0) leg.push(path[k - 1]);
+          leg.push(c);
+        }
+      }
+      flush();
+      for (const c of path) trodden[c] = 1;
+    }
+  }
+  return { roads, trodden };
+}
+
+/** Curiosities: a light on a headland, old stones, a wreck offshore. */
+function placeSites(terrain, hydro, features, towns, rng) {
+  const { N, ocean } = terrain;
+  const { land, coastDist, seaDist, relief, cover, capes, landmass } = features;
+  const sites = [];
+  const clear = (x, y, gap) =>
+    towns.every((t) => Math.hypot(t.x - x, t.y - y) >= gap) &&
+    sites.every((s) => Math.hypot(s.x - x, s.y - y) >= gap);
+
+  const scatter = (test, tries = 4000) => {
+    for (let k = 0; k < tries; k++) {
+      const x = rng.int(4, N - 5);
+      const y = rng.int(4, N - 5);
+      if (test(y * N + x, x, y) && clear(x, y, 12)) return { x, y };
+    }
+    return null;
+  };
+
+  // A light on the boldest headland, if anyone lives here to tend it.
+  const cape = capes.find((c) => clear(c.x, c.y, 8));
+  if (cape && rng.chance(0.75)) sites.push({ kind: 'light', x: cape.x, y: cape.y });
+
+  const inlandKinds = rng.shuffle(['ruin', 'stones', 'hermitage', 'tower', 'mine']);
+  const wanted = rng.int(1, 3);
+  for (const kind of inlandKinds) {
+    if (sites.filter((s) => s.kind !== 'light').length >= wanted) break;
+    let spot = null;
+    if (kind === 'mine') {
+      spot = scatter((i) => relief[i] === RELIEF_MOUNTAIN || (relief[i] === RELIEF_HILL && coastDist[i] > 6), 1500);
+    } else if (kind === 'hermitage') {
+      // Hermits favour islets and lonely shores.
+      spot =
+        scatter((i) => land[i] && landmass.sizes[landmass.id[i]] < 300 && coastDist[i] >= 1.5, 2500) ??
+        scatter((i) => land[i] && coastDist[i] < 4 && coastDist[i] >= 1.5 && cover[i] !== COVER_MARSH, 1500);
+    } else if (kind === 'tower') {
+      spot = scatter((i) => land[i] && coastDist[i] >= 2 && coastDist[i] < 5 && relief[i] !== RELIEF_MOUNTAIN, 1500);
+    } else {
+      spot = scatter((i) => land[i] && coastDist[i] > 5 && relief[i] !== RELIEF_MOUNTAIN && cover[i] !== COVER_MARSH && !hydro.isRiver[i], 1500);
+    }
+    if (spot) sites.push({ kind, ...spot });
+  }
+
+  if (rng.chance(0.7)) {
+    const spot = scatter((i) => ocean[i] && seaDist[i] >= 3 && seaDist[i] <= 7, 3000);
+    if (spot) sites.push({ kind: 'wreck', ...spot });
+  }
+  return sites;
+}
+
+return { placeTowns, buildRoads, placeSites };
+})();
+__modules["island.js"] = (() => {
+// The whole survey: seed in, island out. Each stage draws from its own fork
+// of the seed, so stages stay independent and the result is reproducible.
+
+const { Rng } = __modules["rng.js"];
+const { buildTerrain } = __modules["terrain.js"];
+const { contours, smooth, lineLength } = __modules["contour.js"];
+const { drainage, traceRivers } = __modules["hydrology.js"];
+const { buildFeatures, RELIEF_MOUNTAIN } = __modules["features.js"];
+const { makeLanguage } = __modules["names.js"];
+const { placeTowns, buildRoads, placeSites } = __modules["settlements.js"];
+
+const COMPASS = ['east', 'south-east', 'south', 'south-west', 'west', 'north-west', 'north', 'north-east'];
+
+/** Eight-point bearing of (dx, dy), with y growing southward. */
+function bearing(dx, dy) {
+  const sector = Math.round(Math.atan2(dy, dx) / (Math.PI / 4));
+  return COMPASS[((sector % 8) + 8) % 8];
+}
+
+/** Round to two significant figures, the precision of an honest estimate. */
+function roundish(value) {
+  if (value < 10) return Math.max(1, Math.round(value));
+  const magnitude = 10 ** (Math.floor(Math.log10(value)) - 1);
+  return Math.round(value / magnitude) * magnitude;
+}
+
+function generateIsland(seed, { size = 200 } = {}) {
+  const rng = new Rng(seed);
+  const terrain = buildTerrain(rng.fork('terrain'), { size });
+  const { N, lake, milesPerCell } = terrain;
+  const drains = drainage(terrain);
+  const hydro = { ...drains, ...traceRivers(terrain, drains, rng.fork('rivers')) };
+  const features = buildFeatures(terrain, hydro, rng.fork('features'));
+  const towns = placeTowns(terrain, hydro, features, rng.fork('towns'));
+  const { roads } = buildRoads(terrain, hydro, features, towns);
+  const sites = placeSites(terrain, hydro, features, towns, rng.fork('sites'));
+  const lang = makeLanguage(rng.fork('language'));
+
+  // Coastline: loops in lattice units, each tagged as sea shore or lake shore.
+  const coast = contours(terrain.h, N, 0).map((loop) => {
+    const line = smooth(loop, 2);
+    line.kind = lake[loop.cell[1]] ? 'lake' : 'sea';
+    return line;
+  });
+
+  // Where the land lies, for bearings.
+  const { landmass, land } = features;
+  const mainId = landmass.sizes.indexOf(Math.max(...landmass.sizes));
+  let cx = 0;
+  let cy = 0;
+  let cells = 0;
+  for (let i = 0; i < N * N; i++) {
+    if (land[i]) { cx += i % N; cy += Math.floor(i / N); cells++; }
+  }
+  cx /= cells;
+  cy /= cells;
+  const quarter = (p) => {
+    const dx = p.x - cx;
+    const dy = p.y - cy;
+    return Math.hypot(dx, dy) < N * 0.07 ? 'middle' : bearing(dx, dy);
+  };
+
+  // Longest reach of the main island, and the way it trends.
+  const mainCoast = coast.reduce((a, b) => (b.kind === 'sea' && b.length > a.length ? b : a), coast[0]);
+  let span = { d: 0, a: mainCoast[0], b: mainCoast[0] };
+  for (let i = 0; i < mainCoast.length; i += 6) {
+    for (let j = i + 6; j < mainCoast.length; j += 6) {
+      const d = Math.hypot(mainCoast[i][0] - mainCoast[j][0], mainCoast[i][1] - mainCoast[j][1]);
+      if (d > span.d) span = { d, a: mainCoast[i], b: mainCoast[j] };
+    }
+  }
+
+  // --- Names -------------------------------------------------------------
+  const sortedMasses = landmass.sizes.slice().sort((a, b) => b - a);
+  const scattered = sortedMasses.length >= 6 || (sortedMasses[1] ?? 0) > 0.35 * sortedMasses[0];
+  let name;
+  if (scattered) {
+    const root = lang.root();
+    const word = lang.flavour === 'polyn' && terrain.relief === 'lowland' ? 'Atolls' : lang.flavour === 'norn' ? 'Skerries' : 'Isles';
+    name = { name: `${root} ${word}`, root, article: true, full: `the ${root} ${word}` };
+  } else {
+    name = lang.place('island');
+  }
+  const sea = lang.place('sea');
+
+  const rivers = hydro.rivers.map((r, index) => ({
+    ...r,
+    index,
+    lengthMiles: lineLength(r.points, false) * milesPerCell,
+    mouthQuarter: quarter({ x: r.mouth[0], y: r.mouth[1] }),
+    name: null,
+  }));
+  const mains = rivers.filter((r) => r.parent === -1).sort((a, b) => b.lengthMiles - a.lengthMiles);
+  for (const r of mains.slice(0, 4)) {
+    if (r.cells.length >= 13) r.name = lang.place('river');
+  }
+
+  const totalArea = terrain.landCells * milesPerCell ** 2;
+  const density = rng.fork('people').range(7, 40) * (1 - 0.6 * features.fractions.mountain);
+  const population = totalArea * density;
+  const peopleRng = rng.fork('people');
+  const shares = towns.map((t) => (t.rank === 'capital' ? 1 : t.rank === 'town' ? peopleRng.range(0.22, 0.5) : peopleRng.range(0.05, 0.14)));
+  const urban = peopleRng.range(0.3, 0.5);
+  const shareSum = shares.reduce((a, b) => a + b, 0);
+  const mouthTaken = new Set();
+  const namedTowns = towns.map((t, k) => {
+    const river = t.river >= 0 ? rivers[t.river] : null;
+    let label;
+    if (t.coastal && river?.name && !mouthTaken.has(river.index) && peopleRng.chance(0.6)) {
+      mouthTaken.add(river.index);
+      label = lang.place('mouth', river.name.root);
+    } else {
+      label = lang.place(t.coastal ? 'port' : 'town');
+    }
+    return {
+      ...t,
+      ...label,
+      river: river ? river.index : -1,
+      quarter: quarter(t),
+      population: Math.max(40, roundish((population * urban * shares[k]) / shareSum)),
+      onMain: t.mass === mainId,
+    };
+  });
+
+  const peaks = features.summits.map((s, k) => {
+    const mountain = features.relief[s.y * N + s.x] === RELIEF_MOUNTAIN;
+    return { ...s, mountain, quarter: quarter(s), ...lang.place(mountain ? 'peak' : 'hill'), highest: k === 0 };
+  });
+  const capes = features.capes.slice(0, 2).map((c) => ({ ...c, quarter: quarter(c), ...lang.place('cape') }));
+  const bays = features.bays.map((b) => ({ ...b, quarter: quarter(b), ...lang.place('bay') }));
+  // A crescent island's great bight: which way it opens, and whether one of
+  // the named bays lies in it.
+  let bight = null;
+  if (terrain.bite) {
+    const x = Math.round(terrain.bite.x);
+    const y = Math.round(terrain.bite.y);
+    const opensTo = bearing(x - cx, y - cy);
+    let bay = bays
+      .map((b) => ({ b, d: Math.hypot(b.x - x, b.y - y) }))
+      .filter(({ d }) => d < N * 0.17)
+      .sort((p, q) => p.d - q.d)[0]?.b ?? null;
+    if (!bay && terrain.ocean[y * N + x]) {
+      bay = { x, y, score: 0, quarter: quarter({ x, y }), ...lang.place('bay') };
+      bays.push(bay);
+    }
+    bight = { x, y, opensTo, bay };
+  }
+  const wood = features.wood && { ...features.wood, quarter: quarter(features.wood), ...lang.place('wood') };
+  const marsh = features.marsh && { ...features.marsh, quarter: quarter(features.marsh), ...lang.place('marsh') };
+  const mere = features.mere && { ...features.mere, quarter: quarter(features.mere), ...lang.place('lake') };
+  const namedSites = sites.map((s) => ({ ...s, quarter: quarter(s), ...lang.site(s.kind) }));
+
+  const facts = {
+    areaSqMiles: totalArea,
+    coastMiles: coast.filter((c) => c.kind === 'sea').reduce((sum, c) => sum + lineLength(c), 0) * milesPerCell,
+    lengthMiles: span.d * milesPerCell,
+    trend: [bearing(span.a[0] - span.b[0], span.a[1] - span.b[1]), bearing(span.b[0] - span.a[0], span.b[1] - span.a[1])],
+    peakFeet: peaks.length ? peaks[0].feet : terrain.peakFeet,
+    landmasses: sortedMasses.length,
+    islets: sortedMasses.length - 1,
+    scattered,
+    population: roundish(population),
+    lakes: coast.filter((c) => c.kind === 'lake').length,
+    ...features.fractions,
+  };
+
+  return {
+    seed: String(seed),
+    name,
+    sea,
+    flavour: lang.flavour,
+    shape: terrain.shape,
+    relief: terrain.relief,
+    widthMiles: terrain.widthMiles,
+    centre: { x: cx, y: cy },
+    terrain,
+    hydro,
+    features,
+    coast,
+    rivers,
+    towns: namedTowns,
+    roads,
+    sites: namedSites,
+    peaks,
+    capes,
+    bays,
+    bight,
+    wood,
+    marsh,
+    mere,
+    facts,
+  };
+}
+
+/** A plain-data summary of an island, safe to print as JSON. */
+function summarise(island) {
+  const point = ({ name, x, y, quarter }) => ({ name, x: +(x / (island.terrain.N - 1)).toFixed(3), y: +(y / (island.terrain.N - 1)).toFixed(3), quarter });
+  const round = (v) => Math.round(v * 10) / 10;
+  return {
+    seed: island.seed,
+    name: island.name.full,
+    sea: island.sea.full,
+    language: island.flavour,
+    shape: island.shape,
+    relief: island.relief,
+    sheetWidthMiles: island.widthMiles,
+    areaSqMiles: round(island.facts.areaSqMiles),
+    coastMiles: round(island.facts.coastMiles),
+    lengthMiles: round(island.facts.lengthMiles),
+    highestPointFeet: island.facts.peakFeet,
+    population: island.facts.population,
+    islets: island.facts.islets,
+    lakes: island.facts.lakes,
+    cover: {
+      forest: +island.facts.forest.toFixed(3),
+      marsh: +island.facts.marsh.toFixed(3),
+      hill: +island.facts.hill.toFixed(3),
+      mountain: +island.facts.mountain.toFixed(3),
+    },
+    towns: island.towns.map((t) => ({ ...point(t), rank: t.rank, population: t.population, coastal: t.coastal })),
+    rivers: island.rivers.filter((r) => r.name).map((r) => ({ name: r.name.full, lengthMiles: round(r.lengthMiles), into: r.into })),
+    peaks: island.peaks.map((p) => ({ ...point(p), feet: p.feet })),
+    capes: island.capes.map(point),
+    bays: island.bays.map(point),
+    wood: island.wood ? point(island.wood) : null,
+    marsh: island.marsh ? point(island.marsh) : null,
+    lake: island.mere ? point(island.mere) : null,
+    sites: island.sites.map((s) => ({ ...point(s), kind: s.kind })),
+  };
+}
+
+return { bearing, roundish, generateIsland, summarise };
+})();
+__modules["render.js"] = (() => {
+// The chart: an island drawn as a hand-inked sea chart, in plain SVG.
+//
+// Drawing order, bottom to top: paper and sea, rhumb lines, shore ripples,
+// land, colour washes, rivers, roads, relief and trees, towns, lettering,
+// then the furniture (compass, scale, cartouche), the frame and a wash of
+// paper grain over everything.
+
+const { Rng, hashString } = __modules["rng.js"];
+const { contours, smooth } = __modules["contour.js"];
+const { windowAverager, RELIEF_FLAT, RELIEF_HILL, RELIEF_MOUNTAIN, COVER_FOREST, COVER_MARSH } = __modules["features.js"];
+
+const VIEW = 1000;
+const M = 40; // inset of the map proper
+const S = VIEW - 2 * M;
+
+const THEME = {
+  paper: '#efe3c3',
+  sea: '#d3dccd',
+  land: '#f3e9cf',
+  ink: '#35281d',
+  seaInk: '#5d7b86',
+  river: '#4d7183',
+  red: '#a23b2a',
+  forest: '#8ea163',
+  upland: '#a8936a',
+  peak: '#f0e4c8',
+  marsh: '#7fa392',
+  tree: '#dde0b4',
+  accents: ['#c98a5a', '#9db07a', '#d0a850', '#bf8088', '#86a3b0'],
+};
+
+const FONT = "'IM Fell English', 'Palatino Linotype', Palatino, 'Book Antiqua', P052, 'URW Palladio L', Georgia, serif";
+
+const f = (n) => String(Math.round(n * 10) / 10);
+const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+/** Rough advance width of serif text; good enough to keep labels apart. */
+function textWidth(str, size, spacing = 0) {
+  let w = 0;
+  for (const ch of str) {
+    if (ch === ' ') w += 0.27;
+    else if ("iljtfrI.,'-".includes(ch)) w += 0.31;
+    else if ('mwMW'.includes(ch)) w += 0.86;
+    else if ((ch >= 'A' && ch <= 'Z') || 'ÖÅ'.includes(ch)) w += 0.7;
+    else w += 0.5;
+  }
+  return (w + spacing * str.length) * size;
+}
+
+const pathOf = (pts, closed = false) => {
+  let d = `M${f(pts[0][0])} ${f(pts[0][1])}`;
+  for (let i = 1; i < pts.length; i++) d += `L${f(pts[i][0])} ${f(pts[i][1])}`;
+  return closed ? `${d}Z` : d;
+};
+
+function renderSVG(island, { theme = THEME } = {}) {
+  const { terrain, hydro, features } = island;
+  const { N, ocean } = terrain;
+  const rng = new Rng(island.seed).fork('chart');
+  const uid = `i${hashString(island.seed)().toString(36)}`;
+  const K = S / (N - 1);
+  const px = (v) => M + v * K;
+  const toPx = ([x, y]) => [px(x), px(y)];
+  const cellAt = (X, Y) => {
+    const x = Math.round((X - M) / K);
+    const y = Math.round((Y - M) / K);
+    return x < 0 || y < 0 || x >= N || y >= N ? -1 : y * N + x;
+  };
+  const dryAt = (X, Y) => {
+    const c = cellAt(X, Y);
+    return c >= 0 && !ocean[c];
+  };
+  const accent = rng.pick(theme.accents);
+
+  // --- Occupancy: boxes that lettering and symbols must keep clear of -----
+  const occupied = [];
+  const hits = (b, pad = 0) =>
+    occupied.some((o) => b.x0 - pad < o.x1 && b.x1 + pad > o.x0 && b.y0 - pad < o.y1 && b.y1 + pad > o.y0);
+  const inFrame = (b) => b.x0 > M + 8 && b.x1 < M + S - 8 && b.y0 > M + 8 && b.y1 < M + S - 8;
+  const blocked = (X, Y, r) => hits({ x0: X - r, x1: X + r, y0: Y - r, y1: Y + r });
+  /** Fraction of a box that is dry land, sampled on a small grid. */
+  const dryness = (b) => {
+    let dry = 0;
+    for (let j = 0; j < 3; j++) {
+      for (let i = 0; i < 6; i++) {
+        if (dryAt(b.x0 + ((i + 0.5) / 6) * (b.x1 - b.x0), b.y0 + ((j + 0.5) / 3) * (b.y1 - b.y0))) dry++;
+      }
+    }
+    return dry / 18;
+  };
+  /** Clearance of a box from the land, in cells: 0 if it touches any. */
+  const seaRoom = (b) => {
+    let room = Infinity;
+    for (let Y = b.y0; Y <= b.y1; Y += 2 * K) {
+      for (let X = b.x0; X <= b.x1; X += 2 * K) {
+        const c = cellAt(X, Y);
+        if (c >= 0) room = Math.min(room, features.seaDist[c]);
+      }
+    }
+    return room;
+  };
+
+  const layers = {
+    defs: [], under: [], washes: [], rivers: [], roads: [], relief: [], symbols: [], labels: [], furniture: [],
+  };
+
+  // --- Coast ---------------------------------------------------------------
+  const coastD = island.coast.map((loop) => pathOf(loop.map(toPx), true)).join('');
+  const coastUse = (attrs) => `<use href="#${uid}-coast" ${attrs}/>`;
+  layers.defs.push(
+    `<path id="${uid}-coast" d="${coastD}"/>`,
+    `<clipPath id="${uid}-land">${coastUse('clip-rule="evenodd"')}</clipPath>`,
+    `<clipPath id="${uid}-map"><rect x="${M}" y="${M}" width="${S}" height="${S}"/></clipPath>`,
+  );
+  // Shore ripples: rings at fixed distances from the coast, cut by a mask
+  // of nested strokes. The land later hides the half that falls inside.
+  const rings = [[5, 1.2, '#fff', '46 5'], [11.5, 1, '#b0b0b0', '30 7'], [19, 0.9, '#707070', '18 9']];
+  let mask = `<rect width="${VIEW}" height="${VIEW}" fill="#000"/>`;
+  for (const [dist, thick, level, dash] of rings.slice().reverse()) {
+    mask += coastUse(`fill="none" stroke="${level}" stroke-width="${f(2 * dist + thick)}" stroke-linejoin="round" stroke-dasharray="${dash}"`);
+    mask += coastUse(`fill="none" stroke="#000" stroke-width="${f(2 * dist - thick)}" stroke-linejoin="round"`);
+  }
+  layers.defs.push(`<mask id="${uid}-ripples" maskUnits="userSpaceOnUse" x="0" y="0" width="${VIEW}" height="${VIEW}">${mask}</mask>`);
+
+  // --- Furniture positions (drawn last, but they claim their space first) --
+  const slots = (w, h, inset) => {
+    const lo = M + inset;
+    const hiX = M + S - inset - w;
+    const hiY = M + S - inset - h;
+    const midX = M + (S - w) / 2;
+    const midY = M + (S - h) / 2;
+    return [
+      [lo, lo], [hiX, lo], [lo, hiY], [hiX, hiY], [midX, hiY], [midX, lo], [lo, midY], [hiX, midY],
+    ].map(([x, y], k) => ({ x0: x, y0: y, x1: x + w, y1: y + h, order: k }));
+  };
+  const claim = (w, h, inset) => {
+    let best = null;
+    for (const slot of slots(w, h, inset)) {
+      if (hits(slot, 6)) continue;
+      const score = Math.min(seaRoom(slot), 14) - slot.order * 0.4;
+      if (!best || score > best.score) best = { ...slot, score };
+    }
+    best ??= slots(w, h, inset)[0];
+    occupied.push(best);
+    return best;
+  };
+  const title = cartouche(island, theme);
+  const titleBox = claim(title.w, title.h, 16);
+  const roseR = 54;
+  const roseBox = claim(2 * roseR + 16, 2 * roseR + 34, 14);
+  const rose = { x: (roseBox.x0 + roseBox.x1) / 2, y: roseBox.y0 + 26 + roseR };
+  const bar = scaleBar(island, theme);
+  const barBox = claim(bar.w, bar.h, 18);
+
+  // Rhumb lines radiating from the rose, as on a portolan.
+  let rhumbs = '';
+  for (let k = 0; k < 32; k++) {
+    const a = (k * Math.PI) / 16;
+    rhumbs += `<line x1="${f(rose.x)}" y1="${f(rose.y)}" x2="${f(rose.x + 1500 * Math.cos(a))}" y2="${f(rose.y + 1500 * Math.sin(a))}" opacity="${k % 4 === 0 ? 0.3 : k % 2 === 0 ? 0.2 : 0.11}"/>`;
+  }
+  layers.under.push(`<g clip-path="url(#${uid}-map)" stroke="${theme.ink}" stroke-width="0.7">${rhumbs}</g>`);
+  layers.under.push(`<rect x="${M}" y="${M}" width="${S}" height="${S}" fill="${theme.seaInk}" mask="url(#${uid}-ripples)" clip-path="url(#${uid}-map)"/>`);
+
+  // --- Colour washes ------------------------------------------------------
+  const wash = (test, radius, colour, opacity) => {
+    const mask01 = new Uint8Array(N * N);
+    let any = false;
+    for (let i = 0; i < N * N; i++) if (test(i)) { mask01[i] = 1; any = true; }
+    if (!any) return;
+    const average = windowAverager(N, mask01);
+    const field = new Float32Array(N * N);
+    for (let y = 1; y < N - 1; y++) for (let x = 1; x < N - 1; x++) field[y * N + x] = average(x, y, radius);
+    const d = contours(field, N, 0.45).filter((l) => l.closed && l.length > 8)
+      .map((l) => pathOf(smooth(l, 2).map(toPx), true)).join('');
+    if (d) layers.washes.push(`<path d="${d}" fill="${colour}" fill-rule="evenodd" opacity="${opacity}" filter="url(#${uid}-soft)"/>`);
+  };
+  layers.defs.push(`<filter id="${uid}-soft" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="5"/></filter>`);
+  layers.washes.push(coastUse(`fill="none" stroke="${accent}" stroke-width="20" opacity="0.45" filter="url(#${uid}-soft)"`));
+  wash((i) => features.relief[i] !== RELIEF_FLAT, 2, theme.upland, 0.15);
+  wash((i) => features.relief[i] === RELIEF_MOUNTAIN, 2, theme.upland, 0.24);
+  wash((i) => features.cover[i] === COVER_FOREST, 2, theme.forest, 0.34);
+  wash((i) => features.cover[i] === COVER_MARSH, 2, theme.marsh, 0.4);
+
+  // --- Rivers: runs of constant width, widening downstream ---------------
+  const riverLines = island.rivers.map((r) => smooth(r.points.map(toPx), 2, false));
+  island.rivers.forEach((r, index) => {
+    const pts = riverLines[index];
+    const widthAt = (i) => {
+      const k = Math.min(r.flux.length - 1, Math.floor(i / 4));
+      return Math.round((0.7 + 0.5 * Math.sqrt(r.flux[k] / hydro.threshold)) * 4) / 4;
+    };
+    let run = [pts[0]];
+    let width = widthAt(0);
+    const flush = () => {
+      if (run.length > 1) layers.rivers.push(`<path d="${pathOf(run)}" stroke-width="${width}"/>`);
+    };
+    for (let i = 1; i < pts.length; i++) {
+      run.push(pts[i]);
+      const w = widthAt(i);
+      if (w !== width) {
+        flush();
+        run = [pts[i]];
+        width = w;
+      }
+    }
+    flush();
+  });
+
+  // --- Roads ---------------------------------------------------------------
+  const onRoad = new Uint8Array(N * N);
+  for (const road of island.roads) {
+    for (const [x, y] of road.points) onRoad[y * N + x] = 1;
+    layers.roads.push(`<path d="${pathOf(smooth(road.points.map(toPx), 3, false))}"/>`);
+  }
+
+  // --- Towns and curiosities ----------------------------------------------
+  for (const t of island.towns) {
+    const X = px(t.x);
+    const Y = px(t.y);
+    const r = t.rank === 'capital' ? 9 : t.rank === 'town' ? 7 : 5;
+    layers.symbols.push(townSymbol(X, Y, t.rank, theme));
+    occupied.push({ x0: X - r, x1: X + r, y0: Y - r - 3, y1: Y + r - 2, icon: true });
+  }
+  for (const s of island.sites) {
+    const X = px(s.x);
+    const Y = px(s.y);
+    layers.symbols.push(siteSymbol(X, Y, s.kind, theme));
+    occupied.push({ x0: X - 6, x1: X + 6, y0: Y - 8, y1: Y + 4, icon: true });
+  }
+  for (const p of island.peaks) {
+    occupied.push({ x0: px(p.x) - 4, x1: px(p.x) + 4, y0: px(p.y) - 4, y1: px(p.y) + 4, icon: true });
+  }
+
+  // --- Lettering -----------------------------------------------------------
+  const label = (X, Y, str, o) => {
+    const attrs = [
+      `x="${f(X)}" y="${f(Y)}" font-size="${o.size}"`,
+      o.anchor && o.anchor !== 'start' ? `text-anchor="${o.anchor}"` : '',
+      o.italic ? 'font-style="italic"' : '',
+      o.spacing ? `letter-spacing="${f(o.spacing * o.size)}"` : '',
+      `fill="${o.fill ?? theme.ink}"`,
+      o.opacity ? `opacity="${o.opacity}"` : '',
+      o.halo ? `stroke="${o.halo}" stroke-opacity="0.85" stroke-width="${f(o.size * 0.28)}" paint-order="stroke" stroke-linejoin="round"` : '',
+    ].filter(Boolean).join(' ');
+    return `<text ${attrs}>${esc(str)}</text>`;
+  };
+  const boxFor = (X, Y, w, size, anchor) => {
+    const x0 = anchor === 'middle' ? X - w / 2 : anchor === 'end' ? X - w : X;
+    return { x0, x1: x0 + w, y0: Y - size * 0.78, y1: Y + size * 0.24 };
+  };
+  /** Letter a point feature, trying positions around it for the best fit. */
+  const pointLabel = (X, Y, str, style, { r = 5, prefer = null, must = false, water = 0 } = {}) => {
+    const size = style.size;
+    const w = textWidth(str, size, style.spacing ?? 0);
+    const mid = size * 0.3;
+    // Eight positions hard by the symbol, then eight more a little way off.
+    const options = [];
+    for (const [gap, penalty] of [[0, 0], [11, 0.6]]) {
+      const q = r + gap;
+      options.push(
+        [X + q + 3, Y + mid, 'start', penalty],
+        [X - q - 3, Y + mid, 'end', penalty + 0.12],
+        [X + q, Y - q * 0.6, 'start', penalty + 0.18],
+        [X + q, Y + q + size * 0.6, 'start', penalty + 0.22],
+        [X - q, Y - q * 0.6, 'end', penalty + 0.28],
+        [X - q, Y + q + size * 0.6, 'end', penalty + 0.32],
+        [X, Y - q - 4, 'middle', penalty + 0.36],
+        [X, Y + q + size * 0.82, 'middle', penalty + 0.4],
+      );
+    }
+    let best = null;
+    for (const [lx, ly, anchor, bias] of options) {
+      const box = boxFor(lx, ly, w, size, anchor);
+      if (!inFrame(box)) continue;
+      const dry = dryness(box);
+      let cost = bias + 2.5 * Math.min(dry, 1 - dry) + water * dry;
+      if (prefer) cost += 0.5 * (1 - ((lx - X) * prefer[0] + (ly - mid - Y) * prefer[1]) / (Math.hypot(lx - X, ly - mid - Y) + 1e-6));
+      if (hits(box, 1.5)) cost += 10;
+      if (!best || cost < best.cost) best = { lx, ly, anchor, box, cost, dry };
+    }
+    if (!best || (best.cost >= 10 && !must)) return false;
+    occupied.push(best.box);
+    layers.labels.push(label(best.lx, best.ly, str, { ...style, anchor: best.anchor, halo: best.dry > 0.5 ? theme.land : theme.sea }));
+    return true;
+  };
+
+  for (const t of island.towns) {
+    const capital = t.rank === 'capital';
+    const style = capital ? { size: 15.5, spacing: 0.07 } : t.rank === 'town' ? { size: 14.5 } : { size: 13, italic: true };
+    pointLabel(px(t.x), px(t.y) - 2, capital ? t.name.toUpperCase() : t.name, style, { r: capital ? 9 : 7, must: true });
+  }
+  for (const p of island.peaks) {
+    const X = px(p.x);
+    const Y = px(p.y);
+    const str = p.highest ? `${p.name} ${p.feet}` : p.name;
+    if (pointLabel(X, Y, str, { size: 12, italic: true }, { r: 6 }) || p.highest) {
+      layers.symbols.push(`<path d="M${f(X - 3.2)} ${f(Y + 2.4)}L${f(X)} ${f(Y - 3.4)}L${f(X + 3.2)} ${f(Y + 2.4)}Z" fill="${theme.land}" stroke="${theme.ink}" stroke-width="1"/><circle cx="${f(X)}" cy="${f(Y + 0.5)}" r="0.8" fill="${theme.ink}"/>`);
+    }
+  }
+
+  // Rivers are lettered along their own course, on the straightest reach.
+  island.rivers.forEach((r, index) => {
+    if (!r.name) return;
+    const size = 12;
+    const str = r.name.name;
+    const need = textWidth(str, size, 0.04) + 12;
+    // Iron out the wiggles first so the text reads as one gesture.
+    const raw = riverLines[index];
+    const calm = raw.map((_, i) => {
+      let sx = 0;
+      let sy = 0;
+      let n = 0;
+      for (let k = Math.max(0, i - 7); k <= Math.min(raw.length - 1, i + 7); k++) { sx += raw[k][0]; sy += raw[k][1]; n++; }
+      return [sx / n, sy / n];
+    });
+    let best = null;
+    for (let start = 2; start < calm.length - 4; start += 3) {
+      let len = 0;
+      let turn = 0;
+      let end = start;
+      let x0 = Infinity; let y0 = Infinity; let x1 = -Infinity; let y1 = -Infinity;
+      while (end < calm.length - 1 && len < need) {
+        len += Math.hypot(calm[end + 1][0] - calm[end][0], calm[end + 1][1] - calm[end][1]);
+        if (end > start) {
+          const a = Math.atan2(calm[end][1] - calm[end - 1][1], calm[end][0] - calm[end - 1][0]);
+          const b = Math.atan2(calm[end + 1][1] - calm[end][1], calm[end + 1][0] - calm[end][0]);
+          turn += Math.abs(Math.atan2(Math.sin(b - a), Math.cos(b - a)));
+        }
+        end++;
+      }
+      if (len < need) break;
+      for (let k = start; k <= end; k++) {
+        x0 = Math.min(x0, calm[k][0]); x1 = Math.max(x1, calm[k][0]);
+        y0 = Math.min(y0, calm[k][1]); y1 = Math.max(y1, calm[k][1]);
+      }
+      const box = { x0: x0 - 4, x1: x1 + 4, y0: y0 - size, y1: y1 + 4 };
+      const steep = Math.abs(calm[end][1] - calm[start][1]) / (len + 1e-6);
+      const cost = turn + 0.6 * steep + (hits(box, 1) ? 10 : 0) + (inFrame(box) ? 0 : 10);
+      if (!best || cost < best.cost) best = { start, end, box, cost };
+    }
+    if (!best || best.cost >= 10 || best.cost > 2.2) {
+      // Too short or too crooked to letter along: set the name beside it.
+      const midpoint = raw[Math.floor(raw.length * 0.55)];
+      pointLabel(midpoint[0], midpoint[1], str, { size, italic: true, fill: theme.river }, { r: 3 });
+      return;
+    }
+    let seg = calm.slice(best.start, best.end + 1);
+    if (seg[seg.length - 1][0] < seg[0][0]) seg = seg.reverse();
+    occupied.push(best.box);
+    const id = `${uid}-r${index}`;
+    layers.defs.push(`<path id="${id}" d="${pathOf(seg)}"/>`);
+    layers.labels.push(
+      `<text font-size="${size}" font-style="italic" letter-spacing="${f(0.04 * size)}" fill="${theme.river}" stroke="${theme.land}" stroke-opacity="0.8" stroke-width="${f(size * 0.24)}" paint-order="stroke" stroke-linejoin="round" dy="-3.5"><textPath href="#${id}" startOffset="50%" text-anchor="middle">${esc(str)}</textPath></text>`,
+    );
+  });
+
+  for (const s of island.sites) {
+    pointLabel(px(s.x), px(s.y) - 2, s.name, { size: 11, italic: true }, { r: 6, water: s.kind === 'wreck' ? -1 : 0 });
+  }
+  // Capes are lettered out to sea, bays in their own water.
+  for (const c of island.capes) {
+    const X = px(c.x);
+    const Y = px(c.y);
+    let ox = 0;
+    let oy = 0;
+    for (let k = 0; k < 16; k++) {
+      const a = (k * Math.PI) / 8;
+      const sample = features.landAround(Math.round(c.x + 7 * Math.cos(a)), Math.round(c.y + 7 * Math.sin(a)), 3);
+      ox += (1 - sample) * Math.cos(a);
+      oy += (1 - sample) * Math.sin(a);
+    }
+    const len = Math.hypot(ox, oy) || 1;
+    pointLabel(X + (ox / len) * 4, Y + (oy / len) * 4, c.name, { size: 12, italic: true, fill: theme.seaInk }, { r: 3, prefer: [ox / len, oy / len], water: 1.5 });
+  }
+  // Area names sit on the feature if they can, else as near as will fit.
+  const spiral = [[0, 0]];
+  for (let ring = 1; ring <= 4; ring++) {
+    for (let k = 0; k < 8; k++) {
+      const a = (k * Math.PI) / 4 + ring * 0.4;
+      spiral.push([Math.cos(a) * ring * 16, Math.sin(a) * ring * 11]);
+    }
+  }
+  const areaLabel = (place, style, water) => {
+    const size = style.size;
+    const w = textWidth(place.name, size, style.spacing ?? 0);
+    let best = null;
+    for (const [dx, dy] of spiral) {
+      const X = px(place.x) + dx;
+      const Y = px(place.y) + dy + size * 0.3;
+      const box = boxFor(X, Y, w, size, 'middle');
+      if (!inFrame(box) || hits(box, 2)) continue;
+      const dry = dryness(box);
+      const wrong = water ? dry : 1 - dry;
+      if (wrong > 0.4) continue;
+      const cost = 3 * wrong + Math.hypot(dx, dy) / 40;
+      if (!best || cost < best.cost) best = { X, Y, box, cost };
+    }
+    if (!best) return false;
+    occupied.push(best.box);
+    layers.labels.push(label(best.X, best.Y, place.name, { ...style, anchor: 'middle', halo: water ? theme.sea : theme.land }));
+    return true;
+  };
+  for (const b of island.bays) areaLabel(b, { size: 12, italic: true, fill: theme.seaInk }, true);
+  if (island.mere) {
+    areaLabel(island.mere, { size: 11, italic: true, fill: theme.seaInk }, true) ||
+      pointLabel(px(island.mere.x), px(island.mere.y), island.mere.name, { size: 11, italic: true, fill: theme.seaInk }, { r: 8 });
+  }
+  if (island.wood) areaLabel(island.wood, { size: 12, italic: true, spacing: 0.12, fill: '#4c5a2c' }, false);
+  if (island.marsh) areaLabel(island.marsh, { size: 11.5, italic: true, spacing: 0.1, fill: '#3f6357' }, false);
+
+  // The sea's own name goes in the widest water left.
+  {
+    const lines = island.sea.name.toUpperCase();
+    let placed = false;
+    for (const size of [27, 22, 18]) {
+      if (placed) break;
+      const w = textWidth(lines, size, 0.32);
+      const spots = [];
+      for (let y = 6; y < N - 6; y += 4) {
+        for (let x = 6; x < N - 6; x += 4) {
+          const d = features.seaDist[y * N + x];
+          if (d > 5) spots.push({ x, y, d: Math.min(d, 30) - 0.02 * Math.abs(y - N / 2) });
+        }
+      }
+      spots.sort((a, b) => b.d - a.d);
+      for (const spot of spots) {
+        const box = boxFor(px(spot.x), px(spot.y), w, size, 'middle');
+        if (!inFrame(box) || hits(box, 10) || seaRoom(box) < 2.5) continue;
+        occupied.push(box);
+        layers.labels.push(label(px(spot.x) + 0.16 * size, px(spot.y), lines, { size, italic: true, spacing: 0.32, anchor: 'middle', fill: theme.seaInk, opacity: 0.75 }));
+        placed = true;
+        break;
+      }
+    }
+  }
+
+  // --- Sea ornaments: a ship, a monster, a few waves ----------------------
+  const openSea = (room, w, h) => {
+    for (let k = 0; k < 400; k++) {
+      const X = rng.range(M + 40, M + S - 40);
+      const Y = rng.range(M + 40, M + S - 40);
+      const box = { x0: X - w / 2, x1: X + w / 2, y0: Y - h / 2, y1: Y + h / 2 };
+      if (hits(box, 14) || seaRoom(box) < room) continue;
+      occupied.push(box);
+      return [X, Y];
+    }
+    return null;
+  };
+  const shipAt = openSea(7, 56, 56);
+  if (shipAt) layers.furniture.push(ship(shipAt[0], shipAt[1] + 15, rng.chance(0.5), theme));
+  const beastAt = rng.chance(0.7) ? openSea(8, 96, 44) : null;
+  if (beastAt) layers.furniture.push(serpent(beastAt[0], beastAt[1] + 8, rng.chance(0.5), theme));
+  let waves = '';
+  for (let Y = M + 30; Y < M + S - 20; Y += 46) {
+    for (let X = M + 30; X < M + S - 30; X += 62) {
+      const wx = X + rng.range(-20, 20);
+      const wy = Y + rng.range(-14, 14);
+      const c = cellAt(wx, wy);
+      if (c < 0 || features.seaDist[c] < 7 || rng.chance(0.45) || blocked(wx + 7, wy, 12)) continue;
+      waves += `M${f(wx)} ${f(wy)}q3.5 -3.5 7 0q3.5 3.5 7 0`;
+    }
+  }
+  layers.under.push(`<path d="${waves}" fill="none" stroke="${theme.seaInk}" stroke-width="0.9" stroke-linecap="round" opacity="0.6"/>`);
+
+  // --- Relief and vegetation ----------------------------------------------
+  // Jittered grids, coarse for hills and mountains, fine for trees.
+  const glyphs = [];
+  const scatter = (spacing, fn) => {
+    let row = 0;
+    for (let Y = M; Y < M + S; Y += spacing * 0.86, row++) {
+      for (let X = M + (row % 2 ? spacing / 2 : 0); X < M + S; X += spacing) {
+        const gx = X + rng.range(-0.3, 0.3) * spacing;
+        const gy = Y + rng.range(-0.3, 0.3) * spacing;
+        const c = cellAt(gx, gy);
+        if (c < 0 || !features.land[c]) continue;
+        fn(gx, gy, c);
+      }
+    }
+  };
+  const palms = island.flavour === 'polyn';
+  const conifers = island.flavour === 'norn' || island.flavour === 'karst' ? 0.75 : island.flavour === 'saxon' ? 0.25 : 0.1;
+  scatter(15.5, (X, Y, c) => {
+    if (features.freshDist[c] < 1.3 || onRoad[c]) return;
+    const kind = features.relief[c];
+    if (kind === RELIEF_MOUNTAIN) {
+      const e = terrain.elev[c];
+      const w = 13 + 17 * Math.min(1, (e - 0.25) / 0.6) + rng.range(-1.5, 1.5);
+      if (blocked(X, Y - w * 0.3, w * 0.5)) return;
+      glyphs.push({ y: Y, svg: mountain(X, Y, w, rng, theme) });
+    } else if (kind === RELIEF_HILL) {
+      if (rng.chance(features.cover[c] === COVER_FOREST ? 0.6 : 0.3)) return;
+      if (features.coastDist[c] < 1.5 || blocked(X, Y - 3, 7)) return;
+      glyphs.push({ y: Y, svg: hill(X, Y, 10 + rng.range(0, 5), rng, theme) });
+    }
+  });
+  const trees = new Map();
+  const marks = { marsh: '', grass: '' };
+  scatter(8.6, (X, Y, c) => {
+    if (features.cover[c] !== COVER_FOREST || features.freshDist[c] < 1.1 || onRoad[c]) return;
+    if (features.relief[c] === RELIEF_HILL && rng.chance(0.45)) return;
+    if (features.coastDist[c] < 1.2 || blocked(X, Y - 3, 5)) return;
+    const band = Math.round(Y / 5);
+    const upland = terrain.elev[c] > 0.22;
+    let d;
+    if (palms && !upland && features.coastDist[c] < 9) d = palm(X, Y, rng);
+    else if (rng.chance(upland ? Math.min(1, conifers + 0.4) : conifers)) d = conifer(X, Y, rng);
+    else d = broadleaf(X, Y, rng);
+    trees.set(band, (trees.get(band) ?? '') + d);
+  });
+  scatter(11.5, (X, Y, c) => {
+    if (blocked(X, Y - 2, 5) || onRoad[c] || features.freshDist[c] < 1) return;
+    if (features.cover[c] === COVER_MARSH) {
+      marks.marsh += `M${f(X - 4)} ${f(Y)}h8M${f(X - 2)} ${f(Y - 0.6)}l-1.2 -3M${f(X)} ${f(Y - 0.6)}v-4M${f(X + 2)} ${f(Y - 0.6)}l1.2 -3`;
+    } else if (features.relief[c] === RELIEF_FLAT && features.cover[c] !== COVER_FOREST && features.coastDist[c] > 2 && rng.chance(0.16)) {
+      marks.grass += `M${f(X - 1.6)} ${f(Y)}l-0.8 -2.4M${f(X)} ${f(Y)}v-3M${f(X + 1.6)} ${f(Y)}l0.8 -2.4`;
+    }
+  });
+  layers.relief.push(`<path d="${marks.marsh}" fill="none" stroke="${theme.river}" stroke-width="0.8" stroke-linecap="round"/>`);
+  layers.relief.push(`<path d="${marks.grass}" fill="none" stroke="${theme.ink}" stroke-width="0.6" stroke-linecap="round" opacity="0.45"/>`);
+  for (const band of [...trees.keys()].sort((a, b) => a - b)) {
+    layers.relief.push(`<path d="${trees.get(band)}" fill="${theme.tree}" stroke="${theme.ink}" stroke-width="0.7" stroke-linejoin="round"/>`);
+  }
+  glyphs.sort((a, b) => a.y - b.y);
+  for (const g of glyphs) layers.relief.push(g.svg);
+
+  // --- Furniture -----------------------------------------------------------
+  layers.furniture.push(compassRose(rose.x, rose.y, roseR, theme));
+  layers.furniture.push(`<g transform="translate(${f(barBox.x0)} ${f(barBox.y0)})">${bar.svg}</g>`);
+  layers.furniture.push(`<g transform="translate(${f(titleBox.x0)} ${f(titleBox.y0)})">${title.svg}</g>`);
+
+  // --- Assemble --------------------------------------------------------------
+  const grainSeed = rng.int(1, 9999);
+  layers.defs.push(
+    `<filter id="${uid}-stain" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="0.006 0.009" numOctaves="5" seed="${grainSeed}"/><feColorMatrix values="0 0 0 0 0.45 0 0 0 0 0.32 0 0 0 0 0.15 1.4 0 0 0 -0.8"/></filter>`,
+    `<filter id="${uid}-grain" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="0.7" numOctaves="2" seed="${grainSeed + 1}"/><feColorMatrix values="0 0 0 0 0.3 0 0 0 0 0.2 0 0 0 0 0.1 0.4 0 0 0 -0.15"/></filter>`,
+    `<radialGradient id="${uid}-age" cx="50%" cy="50%" r="72%"><stop offset="0.62" stop-color="#6b4a1e" stop-opacity="0"/><stop offset="1" stop-color="#6b4a1e" stop-opacity="0.3"/></radialGradient>`,
+  );
+
+  const subtitle = `${island.name.full}, in ${island.sea.full}. Seed “${island.seed}”.`;
+  return [
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${VIEW} ${VIEW}" font-family="${FONT}" role="img" aria-labelledby="${uid}-t ${uid}-d">`,
+    `<title id="${uid}-t">A chart of ${esc(island.name.full)}</title>`,
+    `<desc id="${uid}-d">${esc(subtitle)}</desc>`,
+    `<defs>${layers.defs.join('')}</defs>`,
+    `<rect width="${VIEW}" height="${VIEW}" fill="${theme.paper}"/>`,
+    `<rect x="${M}" y="${M}" width="${S}" height="${S}" fill="${theme.sea}"/>`,
+    layers.under.join(''),
+    coastUse(`fill="${theme.land}" fill-rule="evenodd"`),
+    `<g clip-path="url(#${uid}-land)">${layers.washes.join('')}`,
+    `<g fill="none" stroke="${theme.river}" stroke-linecap="round" stroke-linejoin="round">${layers.rivers.join('')}</g></g>`,
+    coastUse(`fill="none" stroke="${theme.ink}" stroke-width="1.5" stroke-linejoin="round"`),
+    `<g fill="none" stroke="${theme.ink}" stroke-width="1.1" stroke-dasharray="3.2 2.6" opacity="0.75">${layers.roads.join('')}</g>`,
+    layers.relief.join(''),
+    layers.symbols.join(''),
+    layers.labels.join(''),
+    layers.furniture.join(''),
+    frame(island, theme),
+    `<g style="mix-blend-mode:multiply" pointer-events="none"><rect width="${VIEW}" height="${VIEW}" filter="url(#${uid}-stain)"/><rect width="${VIEW}" height="${VIEW}" filter="url(#${uid}-grain)"/><rect width="${VIEW}" height="${VIEW}" fill="url(#${uid}-age)"/></g>`,
+    '</svg>',
+  ].join('\n');
+}
+
+// --- Symbols -----------------------------------------------------------------
+
+function mountain(X, Y, w, rng, theme) {
+  const h = w * rng.range(0.78, 1.05);
+  const peakX = X + rng.range(-0.1, 0.1) * w;
+  const top = Y - h;
+  const left = X - w / 2;
+  const right = X + w / 2;
+  const outline =
+    `M${f(left)} ${f(Y)}Q${f(X - w * 0.24)} ${f(Y - h * 0.42)} ${f(peakX)} ${f(top)}` +
+    `Q${f(X + w * 0.2)} ${f(Y - h * 0.5)} ${f(right)} ${f(Y)}`;
+  // Shade the eastern flank with strokes falling away from the ridge.
+  let shade = '';
+  const strokes = Math.max(2, Math.round(w / 5.5));
+  for (let k = 1; k <= strokes; k++) {
+    const t = k / (strokes + 1);
+    const sx = peakX + (right - peakX) * t * 0.9;
+    const sy = top + h * (t * 0.92 + 0.06);
+    const len = h * (0.16 + 0.3 * t) * rng.range(0.8, 1.15);
+    shade += `M${f(sx)} ${f(sy)}l${f(-len * 0.42)} ${f(len)}`;
+  }
+  // A spur running down from the summit gives the peak some body.
+  const spur = `M${f(peakX)} ${f(top)}q${f(-w * 0.04)} ${f(h * 0.3)} ${f(w * 0.05)} ${f(h * 0.55)}`;
+  return (
+    `<path d="${outline}" fill="${theme.peak}" stroke="${theme.ink}" stroke-width="1.05" stroke-linecap="round" stroke-linejoin="round"/>` +
+    `<path d="${shade}${spur}" fill="none" stroke="${theme.ink}" stroke-width="0.65" stroke-linecap="round" opacity="0.8"/>`
+  );
+}
+
+function hill(X, Y, w, rng, theme) {
+  const h = w * rng.range(0.42, 0.56);
+  const d = `M${f(X - w / 2)} ${f(Y)}C${f(X - w * 0.3)} ${f(Y - h * 1.25)} ${f(X + w * 0.3)} ${f(Y - h * 1.25)} ${f(X + w / 2)} ${f(Y)}`;
+  const tick = `M${f(X + w * 0.16)} ${f(Y - h * 0.62)}l${f(-0.8)} ${f(h * 0.5)}M${f(X + w * 0.3)} ${f(Y - h * 0.36)}l${f(-0.6)} ${f(h * 0.34)}`;
+  return (
+    `<path d="${d}" fill="${theme.peak}" stroke="${theme.ink}" stroke-width="0.95" stroke-linecap="round"/>` +
+    `<path d="${tick}" fill="none" stroke="${theme.ink}" stroke-width="0.6" stroke-linecap="round" opacity="0.75"/>`
+  );
+}
+
+function broadleaf(X, Y, rng) {
+  const r = rng.range(2.5, 3.3);
+  return `M${f(X)} ${f(Y)}v${f(-2)}M${f(X - r)} ${f(Y - 2 - r * 0.8)}a${f(r)} ${f(r * 0.95)} 0 1 1 ${f(2 * r)} 0a${f(r)} ${f(r * 0.95)} 0 1 1 ${f(-2 * r)} 0Z`;
+}
+
+function conifer(X, Y, rng) {
+  const h = rng.range(6.5, 8.5);
+  const w = 2.5;
+  return `M${f(X)} ${f(Y)}v${f(-1.6)}M${f(X - w)} ${f(Y - 1.6)}L${f(X)} ${f(Y - 1.6 - h)}L${f(X + w)} ${f(Y - 1.6)}Z`;
+}
+
+function palm(X, Y, rng) {
+  const lean = rng.range(-1.5, 1.5);
+  const tx = X + lean;
+  const ty = Y - rng.range(5.5, 7);
+  const at = `M${f(tx)} ${f(ty)}`;
+  return (
+    `M${f(X)} ${f(Y)}Q${f(X + lean * 1.4)} ${f(Y - 3)} ${f(tx)} ${f(ty)}` +
+    `${at}q-2.4 -2.2 -4.4 0.4${at}q2.4 -2.2 4.4 0.4${at}q-1.4 -3 -3.2 -2.8${at}q1.4 -3 3.2 -2.8`
+  );
+}
+
+function townSymbol(X, Y, rank, theme) {
+  const house = (x, y, w, h, roof) =>
+    `<path d="M${f(x - w / 2)} ${f(y)}v${f(-h)}h${f(w)}v${f(h)}Z" fill="${theme.paper}" stroke="${theme.ink}" stroke-width="0.8" stroke-linejoin="round"/>` +
+    `<path d="M${f(x - w / 2 - 0.9)} ${f(y - h)}L${f(x)} ${f(y - h - roof)}L${f(x + w / 2 + 0.9)} ${f(y - h)}Z" fill="${theme.red}" stroke="${theme.ink}" stroke-width="0.8" stroke-linejoin="round"/>`;
+  const by = Y + 3;
+  if (rank === 'capital') {
+    return (
+      house(X - 6, by, 5, 3.6, 3) + house(X + 6, by, 5, 3.6, 3) +
+      house(X, by, 5.4, 7.5, 5.5) +
+      `<path d="M${f(X)} ${f(by - 13)}v-3.6M${f(X - 1.5)} ${f(by - 15.2)}h3" stroke="${theme.ink}" stroke-width="0.8" fill="none"/>`
+    );
+  }
+  if (rank === 'town') return house(X - 3, by, 4.6, 3.4, 2.8) + house(X + 2.6, by, 4.6, 5, 3.2);
+  return house(X, by, 4.6, 3.2, 2.8);
+}
+
+function siteSymbol(X, Y, kind, theme) {
+  const ink = `stroke="${theme.ink}" stroke-width="0.9" stroke-linecap="round" stroke-linejoin="round"`;
+  switch (kind) {
+    case 'light':
+      return (
+        `<path d="M${f(X - 2.2)} ${f(Y + 3)}L${f(X - 1.2)} ${f(Y - 5)}h2.4L${f(X + 2.2)} ${f(Y + 3)}Z" fill="${theme.paper}" ${ink}/>` +
+        `<circle cx="${f(X)}" cy="${f(Y - 6.6)}" r="1.5" fill="${theme.red}" ${ink}/>` +
+        `<path d="M${f(X - 3.4)} ${f(Y - 7.6)}l-2.6 -1M${f(X + 3.4)} ${f(Y - 7.6)}l2.6 -1M${f(X)} ${f(Y - 9.4)}v-2.4" fill="none" stroke="${theme.red}" stroke-width="0.9" stroke-linecap="round"/>`
+      );
+    case 'ruin':
+      return `<path d="M${f(X - 4)} ${f(Y + 3)}v-7h2.4v3.4M${f(X + 0.6)} ${f(Y + 3)}v-4.6M${f(X + 4)} ${f(Y + 3)}v-8.4l-2 1.6" fill="none" ${ink}/><path d="M${f(X - 5.5)} ${f(Y + 3)}h11" fill="none" ${ink}/>`;
+    case 'stones':
+      return `<path d="M${f(X - 4.4)} ${f(Y + 3)}v-4.2M${f(X - 1.5)} ${f(Y + 1.6)}v-5M${f(X + 1.6)} ${f(Y + 1.6)}v-5M${f(X + 4.4)} ${f(Y + 3)}v-4.2" fill="none" stroke="${theme.ink}" stroke-width="1.7" stroke-linecap="round"/>`;
+    case 'hermitage':
+      return `<path d="M${f(X - 4)} ${f(Y + 3)}q4 -5 8 0" fill="${theme.paper}" ${ink}/><path d="M${f(X)} ${f(Y)}v-7.4M${f(X - 2.2)} ${f(Y - 5)}h4.4" fill="none" stroke="${theme.red}" stroke-width="1.1" stroke-linecap="round"/>`;
+    case 'tower':
+      return `<path d="M${f(X - 2.6)} ${f(Y + 3)}v-8.6h1.3v1.5h1.3v-1.5h1.3v1.5h1.3v-1.5h1.3v8.6Z" fill="${theme.paper}" ${ink}/><path d="M${f(X)} ${f(Y + 3)}v-2.6" fill="none" ${ink}/>`;
+    case 'mine':
+      return `<path d="M${f(X - 3.4)} ${f(Y + 3)}v-3.4a3.4 3.4 0 0 1 6.8 0v3.4Z" fill="${theme.ink}" ${ink}/><path d="M${f(X - 5.5)} ${f(Y + 3)}h11" fill="none" ${ink}/>`;
+    case 'wreck':
+      return (
+        `<path d="M${f(X - 6)} ${f(Y)}q2.6 4.6 7 3.4l4.4 -4.6" fill="none" ${ink}/>` +
+        `<path d="M${f(X - 1.4)} ${f(Y + 3)}l3.2 -9M${f(X - 0.8)} ${f(Y - 3.2)}l4.2 1.4" fill="none" ${ink}/>` +
+        `<path d="M${f(X - 9)} ${f(Y + 5.4)}q2 -2 4 0q2 2 4 0q2 -2 4 0q2 2 4 0" fill="none" stroke="${theme.seaInk}" stroke-width="0.8" stroke-linecap="round"/>`
+      );
+    default:
+      return `<circle cx="${f(X)}" cy="${f(Y)}" r="2" fill="${theme.ink}"/>`;
+  }
+}
+
+function ship(X, Y, flip, theme) {
+  const ink = `stroke="${theme.ink}" stroke-width="0.9" stroke-linecap="round" stroke-linejoin="round"`;
+  return (
+    `<g transform="translate(${f(X)} ${f(Y)}) scale(${flip ? -1.25 : 1.25} 1.25)">` +
+    `<path d="M-22 9q3 -3 6 0q3 3 6 0M8 10q3 -3 6 0q3 3 6 0M-8 12q3 -3 6 0q3 3 6 0" fill="none" stroke="${theme.seaInk}" stroke-width="0.9" stroke-linecap="round"/>` +
+    `<path d="M1 -1V-29M11 -2V-19M-9 -1V-18" fill="none" ${ink}/>` +
+    `<path d="M-7 -23Q1 -26 9 -23Q11.5 -14 9 -6Q1 -9 -7 -6Q-4.6 -14 -7 -23Z" fill="${theme.paper}" ${ink}/>` +
+    `<path d="M7 -16.5Q11 -18.5 15.5 -16.5Q17 -11 15.5 -6.5Q11 -8.5 7 -6.5Q8.4 -11 7 -16.5Z" fill="${theme.paper}" ${ink}/>` +
+    `<path d="M-14.5 -5L-6 -18.5L-7.4 -4Z" fill="${theme.paper}" ${ink}/>` +
+    `<path d="M1 -29q4 -2.2 7.5 -0.2q-3.5 0.8 -7.5 2.6Z" fill="${theme.red}" ${ink}/>` +
+    `<path d="M-15 -2.5Q-13 6 -6.5 7H8Q14 6 17.5 -5L10.5 -1.2H-9.5Z" fill="${theme.paper}" ${ink}/>` +
+    `<path d="M-11.6 1.8H11.8" fill="none" stroke="${theme.ink}" stroke-width="0.6"/>` +
+    '</g>'
+  );
+}
+
+function serpent(X, Y, flip, theme) {
+  const ink = `stroke="${theme.ink}" stroke-width="0.95" stroke-linecap="round" stroke-linejoin="round"`;
+  return (
+    `<g transform="translate(${f(X)} ${f(Y)}) scale(${flip ? -1.25 : 1.25} 1.25)">` +
+    `<path d="M-33 1q-1 -8 -7 -10q3.6 4 2.4 10Z" fill="${theme.paper}" ${ink}/>` +
+    `<path d="M-27 1q5 -13 10.5 0Z" fill="${theme.paper}" ${ink}/>` +
+    `<path d="M-13 1q6.5 -18 13.5 0Z" fill="${theme.paper}" ${ink}/>` +
+    `<path d="M5 1Q6 -17 14 -21Q21 -24 26 -19L20.5 -16.4L25 -14.6Q19 -12.6 16 -14Q12.6 -8 13 1Z" fill="${theme.paper}" ${ink}/>` +
+    `<circle cx="19.4" cy="-19.2" r="0.9" fill="${theme.ink}"/>` +
+    `<path d="M-24.4 -3.4l1.2 -2.6M-9.4 -6l1.6 -3.4M-5.6 -5l1.4 -3M8.6 -8l2.8 -1.4M9.4 -3.6l2.6 -1" fill="none" stroke="${theme.ink}" stroke-width="0.6" stroke-linecap="round"/>` +
+    `<path d="M-42 4q3 -3 6 0q3 3 6 0q3 -3 6 0q3 3 6 0q3 -3 6 0q3 3 6 0q3 -3 6 0q3 3 6 0q3 -3 6 0" fill="none" stroke="${theme.seaInk}" stroke-width="0.9" stroke-linecap="round"/>` +
+    '</g>'
+  );
+}
+
+function compassRose(X, Y, R, theme) {
+  const at = (angle, radius) => [X + radius * Math.sin(angle), Y - radius * Math.cos(angle)];
+  const point = (angle, length, spread, waist) => {
+    const tip = at(angle, length);
+    const a = at(angle - spread, waist);
+    const b = at(angle + spread, waist);
+    const tri = (p, fill) =>
+      `<path d="M${f(X)} ${f(Y)}L${f(p[0])} ${f(p[1])}L${f(tip[0])} ${f(tip[1])}Z" fill="${fill}" stroke="${theme.ink}" stroke-width="0.7" stroke-linejoin="round"/>`;
+    return tri(a, theme.paper) + tri(b, theme.ink);
+  };
+  let out = `<circle cx="${f(X)}" cy="${f(Y)}" r="${f(R * 0.74)}" fill="${theme.paper}" fill-opacity="0.55" stroke="${theme.ink}" stroke-width="0.8"/>`;
+  out += `<circle cx="${f(X)}" cy="${f(Y)}" r="${f(R * 0.66)}" fill="none" stroke="${theme.ink}" stroke-width="0.5"/>`;
+  let ticks = '';
+  for (let k = 0; k < 32; k++) {
+    const a = (k * Math.PI) / 16;
+    const [x0, y0] = at(a, R * 0.66);
+    const [x1, y1] = at(a, R * 0.74);
+    ticks += `M${f(x0)} ${f(y0)}L${f(x1)} ${f(y1)}`;
+  }
+  out += `<path d="${ticks}" stroke="${theme.ink}" stroke-width="0.6" fill="none"/>`;
+  for (let k = 0; k < 8; k++) out += point(Math.PI / 8 + (k * Math.PI) / 4, R * 0.5, 0.36, R * 0.15);
+  for (let k = 0; k < 4; k++) out += point(Math.PI / 4 + (k * Math.PI) / 2, R * 0.7, 0.5, R * 0.17);
+  for (let k = 0; k < 4; k++) out += point((k * Math.PI) / 2, R, 0.62, R * 0.18);
+  out += `<circle cx="${f(X)}" cy="${f(Y)}" r="${f(R * 0.07)}" fill="${theme.red}" stroke="${theme.ink}" stroke-width="0.7"/>`;
+  out += `<text x="${f(X)}" y="${f(Y - R - 7)}" font-size="17" text-anchor="middle" fill="${theme.ink}">N</text>`;
+  return out;
+}
+
+function scaleBar(island, theme) {
+  const perMile = S / island.widthMiles;
+  const nice = [2, 4, 5, 10, 20, 40, 50, 100].filter((m) => m * perMile <= 210);
+  const miles = nice[nice.length - 1];
+  const length = miles * perMile;
+  const parts = 4;
+  let svg = '';
+  for (let k = 0; k < parts; k++) {
+    svg += `<rect x="${f(8 + (k * length) / parts)}" y="14" width="${f(length / parts)}" height="5" fill="${k % 2 ? theme.paper : theme.ink}" stroke="${theme.ink}" stroke-width="0.8"/>`;
+  }
+  const tick = (value, x) => `<text x="${f(8 + x)}" y="10" font-size="10.5" text-anchor="middle" fill="${theme.ink}">${value}</text>`;
+  svg += tick(0, 0) + tick(miles / 2, length / 2) + tick(miles, length);
+  svg += `<text x="${f(8 + length / 2)}" y="33" font-size="11.5" font-style="italic" text-anchor="middle" fill="${theme.ink}">English Miles</text>`;
+  return { svg, w: length + 16, h: 38 };
+}
+
+function cartouche(island, theme) {
+  const { name, sea } = island;
+  const lead = name.article ? 'A Chart of the' : 'A Chart of';
+  const main = name.name.toUpperCase();
+  const tail = `lying in ${sea.full}`;
+  const w = 300;
+  const h = 112;
+  const mainSize = Math.min(27, (w - 44) / (textWidth(main, 1, 0.1) || 1));
+  const tailSize = Math.min(13.5, (w - 40) / textWidth(tail, 1));
+  const corner = (x, y) => `<circle cx="${x}" cy="${y}" r="3.2" fill="${theme.red}" stroke="${theme.ink}" stroke-width="0.8"/>`;
+  const svg =
+    `<rect width="${w}" height="${h}" fill="${theme.paper}" stroke="${theme.ink}" stroke-width="1.6"/>` +
+    `<rect x="5" y="5" width="${w - 10}" height="${h - 10}" fill="none" stroke="${theme.ink}" stroke-width="0.7"/>` +
+    corner(5, 5) + corner(w - 5, 5) + corner(5, h - 5) + corner(w - 5, h - 5) +
+    `<text x="${w / 2}" y="31" font-size="14.5" font-style="italic" text-anchor="middle" fill="${theme.ink}">${lead}</text>` +
+    `<text x="${f(w / 2 + 0.05 * mainSize)}" y="${f(47 + mainSize * 0.62)}" font-size="${f(mainSize)}" letter-spacing="${f(0.1 * mainSize)}" text-anchor="middle" fill="${theme.ink}">${esc(main)}</text>` +
+    `<path d="M${w / 2 - 46} 79h36m20 0h36" stroke="${theme.ink}" stroke-width="0.7"/><path d="M${w / 2} 75.4l3.6 3.6l-3.6 3.6l-3.6 -3.6Z" fill="${theme.red}" stroke="${theme.ink}" stroke-width="0.6"/>` +
+    `<text x="${w / 2}" y="98" font-size="${f(tailSize)}" font-style="italic" text-anchor="middle" fill="${theme.ink}">${esc(tail)}</text>`;
+  return { svg, w, h };
+}
+
+function frame(island, theme) {
+  const a = 16; // outer rule
+  const b0 = 23; // graduated band
+  const b1 = 32;
+  let band = '';
+  const count = 46;
+  const step = S / count;
+  for (let k = 0; k < count; k += 2) {
+    band += `M${f(M + k * step)} ${b0}h${f(step)}v${b1 - b0}h${f(-step)}Z`;
+    band += `M${f(M + k * step)} ${VIEW - b1}h${f(step)}v${b1 - b0}h${f(-step)}Z`;
+    band += `M${b0} ${f(M + k * step)}v${f(step)}h${b1 - b0}v${f(-step)}Z`;
+    band += `M${VIEW - b1} ${f(M + k * step)}v${f(step)}h${b1 - b0}v${f(-step)}Z`;
+  }
+  const rect = (inset, width) =>
+    `<rect x="${inset}" y="${inset}" width="${VIEW - 2 * inset}" height="${VIEW - 2 * inset}" fill="none" stroke="${theme.ink}" stroke-width="${width}"/>`;
+  const credit = `Isolario · seed “${island.seed}”`;
+  return (
+    rect(a, 1.8) + rect(b0, 0.7) + rect(b1, 0.7) + rect(M, 1.3) +
+    `<path d="${band}" fill="${theme.ink}"/>` +
+    `<text x="${VIEW / 2}" y="${VIEW - 3.5}" font-size="9.5" font-style="italic" text-anchor="middle" fill="${theme.ink}" opacity="0.75">${esc(credit)}</text>`
+  );
+}
+
+return { THEME, textWidth, renderSVG };
+})();
+__modules["gazetteer.js"] = (() => {
+// The gazetteer: an entry for the island in the manner of an old pilot
+// book. Every statement of fact is read off the generated island (areas,
+// bearings, heights, which town stands at which river mouth); only the
+// colour, such as customs and the bottom of an anchorage, is invented.
+
+const { Rng } = __modules["rng.js"];
+const { roundish } = __modules["island.js"];
+
+const OPPOSITE = {
+  north: 'south', south: 'north', east: 'west', west: 'east',
+  'north-east': 'south-west', 'south-west': 'north-east',
+  'north-west': 'south-east', 'south-east': 'north-west',
+};
+
+const PRODUCE = {
+  aelic: ['oats', 'a strong spirit distilled from barley', 'salt butter'],
+  norn: ['stockfish', 'eider down', 'train oil'],
+  meridian: ['wine', 'olives', 'dried figs'],
+  karst: ['honey', 'plum brandy', 'smoked cheese'],
+  polyn: ['copra', 'breadfruit', 'pearl-shell'],
+  saxon: ['cider', 'barley', 'salt pork'],
+};
+
+const CUSTOMS = [
+  'Strangers are reckoned lucky, and are seldom allowed to pay for their first meal ashore.',
+  'No boat puts out on the day a child is born in the same street.',
+  'The islanders keep their own reckoning of the calendar, and are commonly a day out from their neighbours.',
+  'It is the custom to greet the first seal of the year by name.',
+  'Debts are settled once a year, at the quay, in the hearing of all.',
+  'Every house keeps a lamp in its seaward window from dusk until the boats are in.',
+  'The people will not whistle afloat, and look hard at a stranger who does.',
+  'A pilot may be had by hoisting a jack at the fore; he will expect to be fed.',
+  'The islanders are great singers, and a calm evening carries their voices well offshore.',
+  'Salt is never passed from hand to hand here, but set down and taken up.',
+  'Bees are told of every death and every wedding before the neighbours are.',
+  'Goods are still weighed against a stone kept chained in the market.',
+  'The wells are dressed with green boughs on midsummer eve.',
+  'Bread is baked once a week, by the whole street together, and a visitor is given the heel.',
+];
+
+const BOTTOMS = ['sand', 'stiff mud', 'sand and shell', 'blue clay', 'fine gravel'];
+
+const number = (n) => Math.round(n).toLocaleString('en-GB');
+const miles = (m) => (m < 10 ? String(Math.max(0.5, Math.round(m * 2) / 2)) : number(roundish(m)));
+const capitalise = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+
+function list(items) {
+  if (items.length <= 1) return items.join('');
+  return `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`;
+}
+
+/** How to refer to a river mid-sentence: "the River Esk", "the Esk Water". */
+const riverRef = (r) => (r.name.article || /^River /.test(r.name.name) ? `the ${r.name.name}` : r.name.name);
+
+function whereabouts(t) {
+  if (t.coastal) return t.quarter === 'middle' ? 'on the inner shore' : `on the ${t.quarter} coast`;
+  return t.quarter === 'middle' ? 'in the heart of the island' : `inland, in the ${t.quarter}`;
+}
+const inThe = (quarter) => (quarter === 'middle' ? 'in the middle of the island' : `in the ${quarter}`);
+
+function gazetteer(island) {
+  const rng = new Rng(island.seed).fork('gazetteer');
+  const { facts, name, sea, towns, peaks, rivers, capes, bays, sites, wood, marsh, mere } = island;
+  const plural = facts.scattered;
+  const is = plural ? 'are' : 'is';
+  const it = plural ? 'they' : 'it';
+  const Name = capitalise(name.full);
+  const capital = towns[0];
+  const sections = [];
+
+  // --- Situation ---------------------------------------------------------
+  {
+    const area = number(roundish(facts.areaSqMiles));
+    let text;
+    if (plural) {
+      text = `${Name} are a group of ${facts.landmasses} islands and islets in ${sea.full}, with some ${area} square miles of land between them. `;
+      text += `The largest is ${miles(facts.lengthMiles)} miles from end to end, lying ${facts.trend[0]} and ${facts.trend[1]}; the whole group has about ${miles(facts.coastMiles)} miles of coast.`;
+    } else {
+      text = `${Name} is an island of some ${area} square miles in ${sea.full}. `;
+      text += `It is ${miles(facts.lengthMiles)} miles at its longest, lying ${facts.trend[0]} and ${facts.trend[1]}, with about ${miles(facts.coastMiles)} miles of coast`;
+      text += facts.islets === 0 ? '.' : facts.islets === 1 ? ' and a single islet standing off it.' : ` and ${facts.islets} islets standing off it.`;
+    }
+    switch (island.shape) {
+      case 'crescent':
+        text += island.bight.bay
+          ? ` The land bends like a sickle about ${island.bight.bay.full}, which lies open to the ${island.bight.opensTo}.`
+          : ` The land bends like a sickle about a great bight, open to the ${island.bight.opensTo}.`;
+        break;
+      case 'long':
+        text += ' The island is long and narrow, and a man may cross it in a morning where it would take him days to walk its length.';
+        break;
+      case 'twin':
+        text += plural
+          ? ' The two chief islands are parted by a narrow sound.'
+          : ' It is all but two islands, held together by a neck of lower ground.';
+        break;
+      case 'shattered':
+        text += ' The sea has broken the coast everywhere into sounds and inlets, so that no house stands far from salt water.';
+        break;
+      default:
+        text += ' The coast is bold and compact, with few deep inlets.';
+    }
+    sections.push({ heading: 'Situation', text });
+  }
+
+  // --- The land ------------------------------------------------------------
+  {
+    const top = peaks[0];
+    let text = '';
+    if (top) {
+      const leagues = Math.round((1.17 * Math.sqrt(top.feet)) / 3);
+      const others = peaks.slice(1).map((p) => `${p.full} (${number(p.feet)} feet)`);
+      if (island.relief === 'lowland') {
+        text += `The land is low throughout. ${capitalise(top.full)}, its highest ground, reaches only ${number(top.feet)} feet, and is no mark for the mariner until he is close in.`;
+      } else if (island.relief === 'downs') {
+        text += `The country is one of rolling downs, rising to ${number(top.feet)} feet at ${top.full} ${inThe(top.quarter)}.`;
+        if (others.length) text += ` ${capitalise(list(others))} ${others.length > 1 ? 'are' : 'is'} somewhat lower.`;
+      } else {
+        text += `The interior is ${island.relief === 'alpine' ? 'mountainous' : 'high and broken'}, culminating in ${top.full}, ${number(top.feet)} feet, ${inThe(top.quarter)}; in clear weather it may be raised at ${leagues} leagues.`;
+        if (others.length) text += ` The lesser heights are ${list(others)}.`;
+      }
+    }
+    const forest = facts.forest;
+    const woods = forest > 0.5 ? `Better than half of ${plural ? 'the land' : 'the island'} is under wood`
+      : forest > 0.28 ? `About a third of ${plural ? 'the land' : 'the island'} is wooded`
+      : forest > 0.1 ? 'Woods are scattered and of no great size'
+      : 'Trees are few, and timber for building is brought in by sea';
+    text += ` ${woods}`;
+    text += wood && forest > 0.1 ? `, the greatest stretch being ${wood.full} ${inThe(wood.quarter)}.` : '.';
+    if (marsh) text += ` ${capitalise(marsh.full)}, ${inThe(marsh.quarter)}, is low wet ground, impassable after rain and much frequented by wildfowl.`;
+    if (mere) text += ` ${capitalise(mere.full)} is a sheet of fresh water ${inThe(mere.quarter)}.`;
+    sections.push({ heading: 'The land', text: text.trim() });
+  }
+
+  // --- Waters --------------------------------------------------------------
+  {
+    const named = rivers.filter((r) => r.name).sort((a, b) => b.lengthMiles - a.lengthMiles);
+    let text;
+    if (!named.length) {
+      text = 'There is no river worth the name. Water is had from wells and from cisterns cut in the rock, and in a dry summer it is rationed.';
+    } else {
+      const describe = (r) => {
+        const town = towns.find((t) => t.coastal && t.river === r.index);
+        if (r.into === 'lake') return `into ${mere ? mere.full : 'a lake'}`;
+        if (town) return `to the sea at ${town.name}`;
+        return r.mouthQuarter === 'middle' ? 'to the sea' : `to the sea on the ${r.mouthQuarter} coast`;
+      };
+      const chief = named[0];
+      text = `The chief stream is ${riverRef(chief)}, which runs some ${miles(chief.lengthMiles)} miles ${describe(chief)}.`;
+      const rest = named.slice(1);
+      if (rest.length === 1) {
+        text += ` ${capitalise(riverRef(rest[0]))}, ${miles(rest[0].lengthMiles)} miles, runs ${describe(rest[0])}.`;
+      } else if (rest.length > 1) {
+        text += ` Lesser waters are ${list(rest.map((r) => `${riverRef(r)} (${miles(r.lengthMiles)} miles, ${describe(r)})`))}.`;
+      }
+      const tail = rng.int(0, 3);
+      text += ` ${(named.length > 1
+        ? [
+          'None is navigable above the tide, but all give good water.',
+          'Boats may be taken a little way up the largest on the flood.',
+          'All run brown with peat after rain and clear within the day.',
+          'They are short and quick, and turn a number of mills.',
+        ]
+        : [
+          'It is not navigable above the tide, but gives good water.',
+          'Boats may be taken a little way up it on the flood.',
+          'It runs brown with peat after rain and clears within the day.',
+          'It is quick for its size, and turns a number of mills.',
+        ])[tail]}`;
+    }
+    sections.push({ heading: 'Waters', text });
+  }
+
+  // --- Towns ---------------------------------------------------------------
+  {
+    const river = capital.river >= 0 && rivers[capital.river].name ? rivers[capital.river] : null;
+    let text = `${capital.name}, the chief place, stands ${whereabouts(capital)}`;
+    if (river) text += capital.coastal ? `, at the mouth of ${riverRef(river)},` : `, on ${riverRef(river)},`;
+    text += ` and holds some ${number(capital.population)} souls.`;
+    const others = towns.slice(1).filter((t) => t.rank === 'town');
+    const villages = towns.filter((t) => t.rank === 'village');
+    const entry = (t) => `${t.name} (${number(t.population)}) ${whereabouts(t)}`;
+    if (others.length === 1) text += ` The only other town is ${entry(others[0])}.`;
+    else if (others.length > 1) text += ` The other towns are ${list(others.map(entry))}.`;
+    if (villages.length === 1) text += ` ${villages[0].name}, ${whereabouts(villages[0])}, is a village of ${number(villages[0].population)}.`;
+    else if (villages.length > 1) text += ` ${capitalise(list(villages.map((v) => v.name)))} are villages.`;
+    const apart = towns.filter((t) => t.mass !== capital.mass);
+    if (apart.length) {
+      text += ` ${capitalise(list(apart.map((t) => t.name)))} ${apart.length > 1 ? 'lie' : 'lies'} across the water from ${capital.name} and ${apart.length > 1 ? 'are' : 'is'} reached only by boat.`;
+    } else if (towns.length > 2) {
+      text += ' A cart road joins them all.';
+    }
+    text += ` The whole population is reckoned at about ${number(facts.population)}.`;
+    sections.push({ heading: 'Towns', text });
+  }
+
+  // --- Livelihood ----------------------------------------------------------
+  {
+    const goods = ['fish'];
+    if (facts.forest > 0.3) goods.push(rng.pick(['timber', 'charcoal', 'pitch and tar']));
+    if (facts.mountain > 0.05) goods.push(rng.pick(['slate', 'copper', 'tin', 'building stone']));
+    if (facts.hill + facts.mountain > 0.3) goods.push(rng.pick(['wool', "goats' cheese", 'hides']));
+    if (facts.marsh > 0.04) goods.push(rng.pick(['salt', 'eels', 'reed for thatch']));
+    if (facts.forest + facts.hill + facts.mountain < 0.45) goods.push(rng.pick(['barley', 'flax', 'salt beef']));
+    const local = rng.shuffle(PRODUCE[island.flavour].slice());
+    const mine = sites.find((s) => s.kind === 'mine');
+    let text = `The people live by ${list(goods.slice(0, 4))}. ${capitalise(local[0])} and ${local[1]} are sent abroad`;
+    text += capital.coastal ? `, chiefly through ${capital.name}.` : '.';
+    if (mine) text += ` The workings at ${mine.full}, ${inThe(mine.quarter)}, are ${rng.pick(['still busy', 'lately reopened', 'nearly worked out'])}.`;
+    text += ` ${rng.pick(CUSTOMS)}`;
+    sections.push({ heading: 'Livelihood', text });
+  }
+
+  // --- For the mariner -----------------------------------------------------
+  {
+    const parts = [];
+    const bay = bays[0];
+    const depth = rng.int(4, 12);
+    const bottom = rng.pick(BOTTOMS);
+    if (bay) {
+      const open = bay.quarter === 'middle' ? null : bay.quarter;
+      parts.push(
+        `The best anchorage is in ${bay.full}${open ? `, on the ${open} side` : ''}, in ${depth} fathoms, ${bottom}` +
+        (open ? `; it is open only to winds from the ${open}.` : ', and sheltered from most winds.'),
+      );
+    } else if (capital.coastal) {
+      parts.push(`There is no sheltered bay; vessels lie off ${capital.name} in ${depth} fathoms, ${bottom}, and must be ready to weigh if the wind comes onshore.`);
+    }
+    const cape = capes[0];
+    if (cape) {
+      parts.push(
+        `${capitalise(cape.full)}, ${cape.quarter === 'middle' ? 'a bold headland' : `the ${cape.quarter} extremity`}, should be given a berth of ${rng.pick(['half a mile', 'a mile', 'two miles'])}, ${rng.pick([
+          'for the race that sets round it on the ebb',
+          'for a reef that runs out under water',
+          'for the squalls that come down off the high ground',
+          'for sunken rocks lying off it',
+        ])}.`,
+      );
+    }
+    const light = sites.find((s) => s.kind === 'light');
+    if (light) parts.push(`A light is shown from ${light.full}${light.quarter === 'middle' ? '' : ` on the ${light.quarter} shore`}, ${rng.pick(['visible four leagues', 'visible three leagues', 'though it is not to be relied on in thick weather'])}.`);
+    const wreck = sites.find((s) => s.kind === 'wreck');
+    if (wreck) {
+      const ship = wreck.name.replace('Wreck of ', '');
+      parts.push(`${capitalise(ship)} was lost ${wreck.quarter === 'middle' ? 'close inshore' : `off the ${wreck.quarter} shore`} in ${rng.int(1688, 1794)}; her ribs still show at low water.`);
+    }
+    parts.push(`The tide rises ${rng.int(3, 18)} feet at springs.`);
+    sections.push({ heading: 'For the mariner', text: parts.join(' ') });
+  }
+
+  // --- Curiosities ---------------------------------------------------------
+  {
+    const parts = [];
+    for (const s of sites) {
+      const where = inThe(s.quarter);
+      if (s.kind === 'ruin') {
+        parts.push(`Of ${s.full.replace(/^Ruins of /, '')}, ${where}, only the walls stand; ${rng.pick([
+          'the islanders quarry it for their byres',
+          'jackdaws have the tower',
+          'no one now living remembers it roofed',
+          'a fair is still held within them once a year',
+        ])}.`);
+      } else if (s.kind === 'stones') {
+        parts.push(`${capitalise(s.full)}, ${where}, ${/Barrow$/.test(s.name) ? 'is an old burial mound' : /Ring$/.test(s.name) ? 'is a circle of standing stones' : 'are a ring of standing stones'}; ${rng.pick([
+          'the islanders will not pass that way after dark',
+          'it is said that no two people count the stones alike',
+          'they are said to have been dancers who kept at it into a holy day',
+          'on the longest day the sun rises exactly between the two tallest',
+        ])}.`);
+      } else if (s.kind === 'hermitage') {
+        parts.push(`${capitalise(s.full)}, ${where}, ${rng.pick([
+          "is visited by the whole island on the saint's day",
+          'has had no hermit these many years, but the door is kept mended',
+          'is kept by one old man, who rings a bell in fog',
+        ])}.`);
+      } else if (s.kind === 'tower') {
+        parts.push(`${capitalise(s.full)}, ${where}, ${rng.pick([
+          'was raised against corsairs and never fired a shot',
+          'mounts two guns, of which one is sound',
+          'is now a store for nets',
+        ])}.`);
+      }
+    }
+    if (parts.length) sections.push({ heading: 'Curiosities', text: parts.join(' ') });
+  }
+
+  const top = peaks[0];
+  const table = [
+    ['Area', `${number(roundish(facts.areaSqMiles))} sq. miles`],
+    ['Coastline', `${miles(facts.coastMiles)} miles`],
+    ['Highest point', top ? `${top.name}, ${number(top.feet)} ft` : `${number(facts.peakFeet)} ft`],
+    ['Chief town', capital.name],
+    ['Population', number(facts.population)],
+    ['Seed', island.seed],
+  ];
+
+  return { title: Name, subtitle: `in ${sea.full}`, table, sections };
+}
+
+/** Wrap text to a column width. */
+function wrap(text, width) {
+  const lines = [];
+  let line = '';
+  for (const word of text.split(/\s+/)) {
+    if (line && line.length + 1 + word.length > width) {
+      lines.push(line);
+      line = word;
+    } else {
+      line = line ? `${line} ${word}` : word;
+    }
+  }
+  if (line) lines.push(line);
+  return lines.join('\n');
+}
+
+/** The gazetteer entry as plain text, for a terminal. */
+function gazetteerText(island, width = 76) {
+  const g = gazetteer(island);
+  const out = [g.title.toUpperCase(), g.subtitle, '='.repeat(Math.max(g.title.length, g.subtitle.length)), ''];
+  const pad = Math.max(...g.table.map(([k]) => k.length));
+  for (const [k, v] of g.table) out.push(`${k.padEnd(pad)}  ${v}`);
+  for (const s of g.sections) {
+    out.push('', s.heading.toUpperCase(), wrap(s.text, width));
+  }
+  return out.join('\n');
+}
+
+return { gazetteer, gazetteerText };
+})();
+__modules["page.js"] = (() => {
+// The printed page: a chart beside its gazetteer entry, as HTML. Used for
+// standalone pages from the command line and by the explorer in the browser.
+
+const { renderSVG } = __modules["render.js"];
+const { gazetteer } = __modules["gazetteer.js"];
+
+const esc = (s) =>
+  String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+const PAGE_CSS = `
+:root {
+  color-scheme: light dark;
+  --desk: #e4dbc6;
+  --page: #f7f0de;
+  --ink: #2f241a;
+  --muted: #6d604d;
+  --rule: #cfc2a3;
+  --accent: #a23b2a;
+  --shadow: rgba(60, 40, 10, 0.28);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --desk: #1b1713;
+    --page: #29231c;
+    --ink: #eae0ca;
+    --muted: #a99b82;
+    --rule: #4b4135;
+    --accent: #df7b66;
+    --shadow: rgba(0, 0, 0, 0.6);
+  }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--desk);
+  color: var(--ink);
+  font: 17px/1.58 'IM Fell English', 'Palatino Linotype', Palatino, 'Book Antiqua', P052, 'URW Palladio L', Georgia, serif;
+}
+.entry {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  gap: 2rem;
+  max-width: 1560px;
+  margin: 0 auto;
+  padding: 1.5rem;
+  align-items: start;
+}
+.chart {
+  margin: 0;
+  position: sticky;
+  top: 1.5rem;
+  box-shadow: 0 1px 2px var(--shadow), 0 14px 36px var(--shadow);
+}
+.chart svg { display: block; width: 100%; height: auto; }
+.gazetteer {
+  background: var(--page);
+  border: 1px solid var(--rule);
+  padding: 2rem 2.3rem 2.4rem;
+}
+.gazetteer h1 {
+  margin: 0;
+  font-size: 1.65rem;
+  font-weight: normal;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  line-height: 1.25;
+  text-wrap: balance;
+}
+.gazetteer .subtitle { margin: 0.25rem 0 1.2rem; font-style: italic; color: var(--muted); }
+.facts {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.15rem 1.2rem;
+  margin: 0 0 1.3rem;
+  padding: 0.8rem 0;
+  border-block: 1px solid var(--rule);
+  font-size: 0.95rem;
+}
+.facts dt { font-variant: small-caps; letter-spacing: 0.06em; color: var(--muted); }
+.facts dd { margin: 0; font-variant-numeric: oldstyle-nums; overflow-wrap: anywhere; }
+.gazetteer h2 {
+  margin: 1.25rem 0 0.15rem;
+  font-size: 0.82rem;
+  font-weight: normal;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.gazetteer p { margin: 0; hyphens: auto; text-wrap: pretty; }
+@media (max-width: 920px) {
+  .entry { grid-template-columns: 1fr; padding: 1rem; gap: 1.2rem; }
+  .chart { position: static; }
+  .gazetteer { padding: 1.4rem 1.2rem 1.6rem; }
+}
+@media print {
+  body { background: none; }
+  .chart { box-shadow: none; position: static; }
+  .gazetteer { border: none; }
+}
+`;
+
+/** The chart and its entry as an HTML fragment. All text is escaped. */
+function entryHTML(island, svg = renderSVG(island)) {
+  const g = gazetteer(island);
+  const facts = g.table.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('');
+  const sections = g.sections
+    .map((s) => `<section><h2>${esc(s.heading)}</h2><p>${esc(s.text)}</p></section>`)
+    .join('\n');
+  return (
+    `<figure class="chart">${svg}</figure>\n` +
+    `<article class="gazetteer"><h1>${esc(g.title)}</h1><p class="subtitle">${esc(g.subtitle)}</p>` +
+    `<dl class="facts">${facts}</dl>\n${sections}</article>`
+  );
+}
+
+/** A complete, self-contained HTML page for one island. */
+function pageHTML(island) {
+  const g = gazetteer(island);
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>${esc(g.title)} · Isolario</title>
+<style>${PAGE_CSS}</style>
+</head>
+<body>
+<main class="entry">
+${entryHTML(island)}
+</main>
+</body>
+</html>
+`;
+}
+
+return { PAGE_CSS, entryHTML, pageHTML };
+})();
+__modules["seeds.js"] = (() => {
+// Seeds for when nobody supplies one: two words, easy to say and to share.
+
+const FIRST = [
+  'amber', 'ashen', 'bright', 'cold', 'copper', 'drowned', 'early', 'far', 'fallow', 'gilded',
+  'green', 'grey', 'hollow', 'idle', 'iron', 'last', 'late', 'lone', 'low', 'mild', 'north',
+  'old', 'pale', 'quiet', 'red', 'salt', 'silver', 'slow', 'small', 'still', 'tall', 'thin',
+  'tidal', 'white', 'wide', 'wild', 'winter', 'young',
+];
+const SECOND = [
+  'anchor', 'beacon', 'bell', 'cairn', 'candle', 'compass', 'cormorant', 'current', 'ember',
+  'ferry', 'gannet', 'harbour', 'heron', 'kelp', 'lantern', 'ledger', 'mackerel', 'mooring',
+  'oar', 'osprey', 'pilot', 'plover', 'quay', 'reef', 'rudder', 'sail', 'sextant', 'shoal',
+  'skerry', 'sounding', 'spar', 'squall', 'tern', 'tide', 'tiller', 'wake', 'whimbrel', 'wreck',
+];
+
+/** A fresh seed such as "salt-heron". Pass a 0..1 source to make it repeatable. */
+function randomSeed(random = Math.random) {
+  const pick = (list) => list[Math.floor(random() * list.length)];
+  return `${pick(FIRST)}-${pick(SECOND)}`;
+}
+
+return { randomSeed };
+})();
+__modules["index.js"] = (() => {
+// Isolario: a book of islands that do not exist.
+
+
+
+
+
+
+
+
+return { Rng: __modules["rng.js"].Rng, generateIsland: __modules["island.js"].generateIsland, summarise: __modules["island.js"].summarise, renderSVG: __modules["render.js"].renderSVG, gazetteer: __modules["gazetteer.js"].gazetteer, gazetteerText: __modules["gazetteer.js"].gazetteerText, entryHTML: __modules["page.js"].entryHTML, pageHTML: __modules["page.js"].pageHTML, PAGE_CSS: __modules["page.js"].PAGE_CSS, randomSeed: __modules["seeds.js"].randomSeed };
+})();
+return __modules["index.js"];
+})();
+</script>
+<script>
+(() => {
+  const { generateIsland, renderSVG, entryHTML, randomSeed } = Isolario;
+  const entry = document.getElementById('entry');
+  const input = document.getElementById('seed');
+  const status = document.getElementById('status');
+  let current = null;
+  let statusTimer = 0;
+
+  const say = (message) => {
+    status.textContent = message;
+    clearTimeout(statusTimer);
+    statusTimer = setTimeout(() => { status.textContent = ''; }, 2400);
+  };
+
+  const seedFromHash = () => {
+    const raw = location.hash.slice(1);
+    if (!raw) return null;
+    try {
+      return decodeURIComponent(raw) || null;
+    } catch {
+      return raw;
+    }
+  };
+
+  function show(seed) {
+    input.value = seed;
+    entry.classList.add('busy');
+    // Let the dimmed state paint before the survey blocks the thread.
+    requestAnimationFrame(() => setTimeout(() => {
+      const island = generateIsland(seed);
+      const svg = renderSVG(island);
+      entry.innerHTML = entryHTML(island, svg);
+      entry.classList.remove('busy');
+      const name = island.name.full.replace(/^the /, 'The ');
+      document.title = `${name} · Isolario`;
+      current = { seed, svg };
+    }, 0));
+  }
+
+  function go(seed, replace = false) {
+    const hash = `#${encodeURIComponent(seed)}`;
+    if (replace) history.replaceState(null, '', hash);
+    else if (location.hash !== hash) history.pushState(null, '', hash);
+    show(seed);
+  }
+
+  document.getElementById('controls').addEventListener('submit', (event) => {
+    event.preventDefault();
+    go(input.value.trim() || randomSeed());
+  });
+  document.getElementById('another').addEventListener('click', () => go(randomSeed()));
+  document.getElementById('copy').addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(location.href);
+      say('Link copied');
+    } catch {
+      say('Copy it from the address bar');
+    }
+  });
+  document.getElementById('save').addEventListener('click', () => {
+    if (!current) return;
+    const slug = current.seed.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'island';
+    const url = URL.createObjectURL(new Blob([current.svg], { type: 'image/svg+xml' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `isolario-${slug}.svg`;
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    say('Chart saved');
+  });
+  document.addEventListener('keydown', (event) => {
+    if (event.key !== 'n' || event.metaKey || event.ctrlKey || event.altKey) return;
+    if (event.target instanceof HTMLInputElement || event.target instanceof HTMLButtonElement) return;
+    go(randomSeed());
+  });
+  window.addEventListener('popstate', () => show(seedFromHash() ?? randomSeed()));
+
+  go(seedFromHash() ?? randomSeed(), true);
+})();
+</script>
+</body>
+</html>

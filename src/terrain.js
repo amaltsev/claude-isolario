@@ -182,10 +182,20 @@ export function buildTerrain(rng, { size = 200 } = {}) {
   const sizeFactor = Math.min(1, 0.45 + widthMiles / 110);
   const peakFeet = Math.round((scaleRng.range(feet[0], feet[1]) * sizeFactor) / 10) * 10;
 
+  // Where a crescent's bight was bitten out, back in lattice coordinates.
+  const [firstBite] = params.bites;
+  const bite = firstBite
+    ? {
+      x: ((firstBite.x * cos - firstBite.y * sin + 1) / 2) * (N - 1),
+      y: ((firstBite.x * sin + firstBite.y * cos + 1) / 2) * (N - 1),
+    }
+    : null;
+
   return {
     N,
     shape,
     relief,
+    bite,
     h,
     elev, // 0..1 on land, 0 on water
     ocean,

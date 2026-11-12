@@ -80,12 +80,11 @@ export function gazetteer(island) {
       text += `It is ${miles(facts.lengthMiles)} miles at its longest, lying ${facts.trend[0]} and ${facts.trend[1]}, with about ${miles(facts.coastMiles)} miles of coast`;
       text += facts.islets === 0 ? '.' : facts.islets === 1 ? ' and a single islet standing off it.' : ` and ${facts.islets} islets standing off it.`;
     }
-    const bay = bays[0];
     switch (island.shape) {
       case 'crescent':
-        text += bay
-          ? ` The land bends like a sickle about ${bay.full}, which lies open to the ${bay.quarter === 'middle' ? 'sea' : bay.quarter}.`
-          : ' The land bends like a sickle about a great bay.';
+        text += island.bight.bay
+          ? ` The land bends like a sickle about ${island.bight.bay.full}, which lies open to the ${island.bight.opensTo}.`
+          : ` The land bends like a sickle about a great bight, open to the ${island.bight.opensTo}.`;
         break;
       case 'long':
         text += ' The island is long and narrow, and a man may cross it in a morning where it would take him days to walk its length.';
