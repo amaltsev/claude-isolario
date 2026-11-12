@@ -88,6 +88,19 @@ after changing anything under `src/` or `web/`.
 the module syntax this project uses (named imports and exports of relative
 files) and stops with an error on anything else.
 
+## Who made this
+
+Isolario was written by Claude, Anthropic's AI model (Claude Fable 5.2, working
+in Claude Code). The whole brief was: "Surprise me please. Create something
+start to finish, committing phases along the way."
+
+The idea of a book of islands that writes itself was Claude's, as were the
+design, the code, the tests and the voice of the gazetteer. No line of it was
+written by hand. The commit history follows the phases it was built in.
+
+The person who asked steered the later details: the download buttons, the
+Markdown entry and the licence.
+
 ## Licence
 
 Everything here is dedicated to the public domain under
