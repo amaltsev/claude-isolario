@@ -159,13 +159,13 @@ export function gazetteer(island) {
           'None is navigable above the tide, but all give good water.',
           'Boats may be taken a little way up the largest on the flood.',
           'All run brown with peat after rain and clear within the day.',
-          'They are short and quick, and turn a number of mills.',
+          'They run quick, and turn a number of mills.',
         ]
         : [
           'It is not navigable above the tide, but gives good water.',
           'Boats may be taken a little way up it on the flood.',
           'It runs brown with peat after rain and clears within the day.',
-          'It is quick for its size, and turns a number of mills.',
+          'It runs quick, and turns a number of mills.',
         ])[tail]}`;
     }
     sections.push({ heading: 'Waters', text });

@@ -2764,7 +2764,9 @@ function frame(island, theme) {
   }
   const rect = (inset, width) =>
     `<rect x="${inset}" y="${inset}" width="${VIEW - 2 * inset}" height="${VIEW - 2 * inset}" fill="none" stroke="${theme.ink}" stroke-width="${width}"/>`;
-  const credit = `Isolario · seed “${island.seed}”`;
+  // Keep an essay-length seed from running off the sheet.
+  const shown = island.seed.length > 60 ? `${island.seed.slice(0, 57)}…` : island.seed;
+  const credit = `Isolario · seed “${shown}”`;
   return (
     rect(a, 1.8) + rect(b0, 0.7) + rect(b1, 0.7) + rect(M, 1.3) +
     `<path d="${band}" fill="${theme.ink}"/>` +
@@ -2936,13 +2938,13 @@ function gazetteer(island) {
           'None is navigable above the tide, but all give good water.',
           'Boats may be taken a little way up the largest on the flood.',
           'All run brown with peat after rain and clear within the day.',
-          'They are short and quick, and turn a number of mills.',
+          'They run quick, and turn a number of mills.',
         ]
         : [
           'It is not navigable above the tide, but gives good water.',
           'Boats may be taken a little way up it on the flood.',
           'It runs brown with peat after rain and clears within the day.',
-          'It is quick for its size, and turns a number of mills.',
+          'It runs quick, and turns a number of mills.',
         ])[tail]}`;
     }
     sections.push({ heading: 'Waters', text });
@@ -3306,26 +3308,35 @@ return __modules["index.js"];
     }
   };
 
-  function show(seed) {
+  let pending = 0;
+  function draw(seed) {
+    const island = generateIsland(seed);
+    const svg = renderSVG(island);
+    entry.innerHTML = entryHTML(island, svg);
+    entry.classList.remove('busy');
+    const name = island.name.full.replace(/^the /, 'The ');
+    document.title = `${name} · Isolario`;
+    current = { seed, svg };
+  }
+  function show(seed, immediately = false) {
     input.value = seed;
+    clearTimeout(pending);
+    if (immediately) {
+      draw(seed);
+      return;
+    }
+    // A short timer lets the dimmed state paint before the survey blocks
+    // the thread. (Not requestAnimationFrame: that never fires in a tab
+    // opened in the background, and the page would sit empty.)
     entry.classList.add('busy');
-    // Let the dimmed state paint before the survey blocks the thread.
-    requestAnimationFrame(() => setTimeout(() => {
-      const island = generateIsland(seed);
-      const svg = renderSVG(island);
-      entry.innerHTML = entryHTML(island, svg);
-      entry.classList.remove('busy');
-      const name = island.name.full.replace(/^the /, 'The ');
-      document.title = `${name} · Isolario`;
-      current = { seed, svg };
-    }, 0));
+    pending = setTimeout(() => draw(seed), 30);
   }
 
   function go(seed, replace = false) {
     const hash = `#${encodeURIComponent(seed)}`;
     if (replace) history.replaceState(null, '', hash);
     else if (location.hash !== hash) history.pushState(null, '', hash);
-    show(seed);
+    show(seed, replace);
   }
 
   document.getElementById('controls').addEventListener('submit', (event) => {

@@ -125,26 +125,35 @@
     }
   };
 
-  function show(seed) {
+  let pending = 0;
+  function draw(seed) {
+    const island = generateIsland(seed);
+    const svg = renderSVG(island);
+    entry.innerHTML = entryHTML(island, svg);
+    entry.classList.remove('busy');
+    const name = island.name.full.replace(/^the /, 'The ');
+    document.title = `${name} · Isolario`;
+    current = { seed, svg };
+  }
+  function show(seed, immediately = false) {
     input.value = seed;
+    clearTimeout(pending);
+    if (immediately) {
+      draw(seed);
+      return;
+    }
+    // A short timer lets the dimmed state paint before the survey blocks
+    // the thread. (Not requestAnimationFrame: that never fires in a tab
+    // opened in the background, and the page would sit empty.)
     entry.classList.add('busy');
-    // Let the dimmed state paint before the survey blocks the thread.
-    requestAnimationFrame(() => setTimeout(() => {
-      const island = generateIsland(seed);
-      const svg = renderSVG(island);
-      entry.innerHTML = entryHTML(island, svg);
-      entry.classList.remove('busy');
-      const name = island.name.full.replace(/^the /, 'The ');
-      document.title = `${name} · Isolario`;
-      current = { seed, svg };
-    }, 0));
+    pending = setTimeout(() => draw(seed), 30);
   }
 
   function go(seed, replace = false) {
     const hash = `#${encodeURIComponent(seed)}`;
     if (replace) history.replaceState(null, '', hash);
     else if (location.hash !== hash) history.pushState(null, '', hash);
-    show(seed);
+    show(seed, replace);
   }
 
   document.getElementById('controls').addEventListener('submit', (event) => {

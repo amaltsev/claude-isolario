@@ -780,7 +780,9 @@ function frame(island, theme) {
   }
   const rect = (inset, width) =>
     `<rect x="${inset}" y="${inset}" width="${VIEW - 2 * inset}" height="${VIEW - 2 * inset}" fill="none" stroke="${theme.ink}" stroke-width="${width}"/>`;
-  const credit = `Isolario · seed “${island.seed}”`;
+  // Keep an essay-length seed from running off the sheet.
+  const shown = island.seed.length > 60 ? `${island.seed.slice(0, 57)}…` : island.seed;
+  const credit = `Isolario · seed “${shown}”`;
   return (
     rect(a, 1.8) + rect(b0, 0.7) + rect(b1, 0.7) + rect(M, 1.3) +
     `<path d="${band}" fill="${theme.ink}"/>` +
