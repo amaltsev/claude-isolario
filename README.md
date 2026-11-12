@@ -54,15 +54,6 @@ bearings, river lengths and populations are all measured.
 Only the colour is invented: what the islanders export, how deep the anchorage
 is, why nobody passes the standing stones after dark.
 
-## Using the islands
-
-The maps and texts this makes are free to use for anything, commercial or not:
-a campaign, a novel, a poster. No credit is needed. So far as there is any
-copyright in them, it is waived under
-[CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/).
-
-That covers the islands, not the code that makes them.
-
 ## How an island is made
 
 Each stage draws from its own fork of the seed, so changing one stage never
@@ -96,3 +87,9 @@ after changing anything under `src/` or `web/`.
 `scripts/build.js` contains a deliberately tiny bundler. It understands only
 the module syntax this project uses (named imports and exports of relative
 files) and stops with an error on anything else.
+
+## Licence
+
+Everything here is dedicated to the public domain under
+[CC0 1.0](LICENSE): the code, and every map and text it makes. Use them for
+anything, commercial or not: a campaign, a novel, a poster. No credit is needed.

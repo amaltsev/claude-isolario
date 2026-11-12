@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "description": "A book of islands that do not exist: procedural charts and sailing directions grown from a seed.",
+  "license": "CC0-1.0",
   "type": "module",
   "bin": {
     "isolario": "bin/isolario.js"
