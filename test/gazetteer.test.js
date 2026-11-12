@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { generateIsland } from '../src/island.js';
-import { gazetteer, gazetteerText } from '../src/gazetteer.js';
+import { gazetteer, gazetteerText, gazetteerMarkdown } from '../src/gazetteer.js';
 import { entryHTML, pageHTML } from '../src/page.js';
 import { randomSeed } from '../src/seeds.js';
 
@@ -66,6 +66,30 @@ test('plain text wraps to the requested width', () => {
   assert.equal(text, gazetteerText(island('vessarn'), 60));
 });
 
+test('markdown carries the whole entry, one paragraph per line', () => {
+  for (const seed of SEEDS) {
+    const is = island(seed);
+    const g = gazetteer(is);
+    const text = gazetteerMarkdown(is);
+    const lines = text.split('\n');
+    assert.equal(lines[0], `# ${g.title}`);
+    assert.ok(text.endsWith('\n') && !text.endsWith('\n\n'));
+    for (const [k, v] of g.table) assert.ok(lines.includes(`- **${k}:** ${v}`), `seed ${seed}: ${k}`);
+    for (const s of g.sections) {
+      const at = lines.indexOf(`## ${s.heading}`);
+      assert.ok(at > 0, `seed ${seed}: ${s.heading}`);
+      assert.deepEqual(lines.slice(at - 1, at + 4), ['', `## ${s.heading}`, '', s.text, '']);
+    }
+  }
+  assert.equal(gazetteerMarkdown(island('tern')), gazetteerMarkdown(island('tern')));
+});
+
+test('markdown escapes seeds that look like markup', () => {
+  const text = gazetteerMarkdown(generateIsland('*bold* | `tick` <b>\n# heading', { size: 100 }));
+  assert.ok(text.includes('- **Seed:** \\*bold\\* \\| \\`tick\\` \\<b\\> \\# heading'));
+  assert.equal(text.split('\n').filter((line) => /^#+ /.test(line)).length, 1 + gazetteer(island('a')).sections.length);
+});
+
 test('pages escape hostile seeds', () => {
   const hostile = generateIsland('<img src=x onerror=alert(1)>"', { size: 100 });
   const html = pageHTML(hostile);
@@ -93,13 +117,16 @@ test('command line: text, json and files', () => {
   assert.equal(data.seed, 'vessarn');
   assert.ok(data.towns.length >= 2);
   assert.ok(run('vessarn', '--format', 'svg').startsWith('<svg'));
+  assert.equal(run('vessarn', '-f', 'md'), gazetteerMarkdown(generateIsland('vessarn')));
   assert.ok(run('--help').includes('Usage'));
 
   const dir = mkdtempSync(join(tmpdir(), 'isolario-'));
   run('vessarn', '-o', join(dir, 'one.svg'));
   assert.ok(readFileSync(join(dir, 'one.svg'), 'utf8').startsWith('<svg'));
+  run('vessarn', '-o', join(dir, 'one.md'));
+  assert.ok(readFileSync(join(dir, 'one.md'), 'utf8').startsWith('# '));
   run('fleet', '-n', '3', '-o', join(dir, 'many.html'));
-  assert.deepEqual(readdirSync(dir).sort(), ['many-fleet-1.html', 'many-fleet-2.html', 'many-fleet-3.html', 'one.svg']);
+  assert.deepEqual(readdirSync(dir).sort(), ['many-fleet-1.html', 'many-fleet-2.html', 'many-fleet-3.html', 'one.md', 'one.svg']);
   rmSync(dir, { recursive: true });
 });
 

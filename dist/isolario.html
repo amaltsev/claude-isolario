@@ -180,7 +180,8 @@ body {
   <span class="spacer"></span>
   <span class="status" id="status" role="status" aria-live="polite"></span>
   <button type="button" id="copy">Copy link</button>
-  <button type="button" id="save">Save chart</button>
+  <button type="button" id="save-map">Download map</button>
+  <button type="button" id="save-text">Download text</button>
 </form>
 <main class="entry" id="entry"></main>
 <footer class="colophon">
@@ -3104,7 +3105,20 @@ function gazetteerText(island, width = 76) {
   return out.join('\n');
 }
 
-return { gazetteer, gazetteerText };
+/** Escape text for Markdown, so a seed like `*x*` or `a|b` reads as itself. */
+const md = (text) => String(text).replace(/\s+/g, ' ').replace(/[\\`*_[\]<>|#~]/g, '\\$&');
+
+/** The gazetteer entry as Markdown: one paragraph per line, facts as a list. */
+function gazetteerMarkdown(island) {
+  const g = gazetteer(island);
+  const out = [`# ${md(g.title)}`, '', `*${md(g.subtitle)}*`, ''];
+  for (const [k, v] of g.table) out.push(`- **${md(k)}:** ${md(v)}`);
+  for (const s of g.sections) out.push('', `## ${md(s.heading)}`, '', md(s.text));
+  out.push('', '---', '', '*An entry from the Isolario, a book of islands that do not exist.*', '');
+  return out.join('\n');
+}
+
+return { gazetteer, gazetteerText, gazetteerMarkdown };
 })();
 __modules["page.js"] = (() => {
 // The printed page: a chart beside its gazetteer entry, as HTML. Used for
@@ -3278,14 +3292,14 @@ __modules["index.js"] = (() => {
 
 
 
-return { Rng: __modules["rng.js"].Rng, generateIsland: __modules["island.js"].generateIsland, summarise: __modules["island.js"].summarise, renderSVG: __modules["render.js"].renderSVG, gazetteer: __modules["gazetteer.js"].gazetteer, gazetteerText: __modules["gazetteer.js"].gazetteerText, entryHTML: __modules["page.js"].entryHTML, pageHTML: __modules["page.js"].pageHTML, PAGE_CSS: __modules["page.js"].PAGE_CSS, randomSeed: __modules["seeds.js"].randomSeed };
+return { Rng: __modules["rng.js"].Rng, generateIsland: __modules["island.js"].generateIsland, summarise: __modules["island.js"].summarise, renderSVG: __modules["render.js"].renderSVG, gazetteer: __modules["gazetteer.js"].gazetteer, gazetteerText: __modules["gazetteer.js"].gazetteerText, gazetteerMarkdown: __modules["gazetteer.js"].gazetteerMarkdown, entryHTML: __modules["page.js"].entryHTML, pageHTML: __modules["page.js"].pageHTML, PAGE_CSS: __modules["page.js"].PAGE_CSS, randomSeed: __modules["seeds.js"].randomSeed };
 })();
 return __modules["index.js"];
 })();
 </script>
 <script>
 (() => {
-  const { generateIsland, renderSVG, entryHTML, randomSeed } = Isolario;
+  const { generateIsland, renderSVG, entryHTML, gazetteerMarkdown, randomSeed } = Isolario;
   const entry = document.getElementById('entry');
   const input = document.getElementById('seed');
   const status = document.getElementById('status');
@@ -3316,7 +3330,7 @@ return __modules["index.js"];
     entry.classList.remove('busy');
     const name = island.name.full.replace(/^the /, 'The ');
     document.title = `${name} · Isolario`;
-    current = { seed, svg };
+    current = { seed, svg, island };
   }
   function show(seed, immediately = false) {
     input.value = seed;
@@ -3352,16 +3366,23 @@ return __modules["index.js"];
       say('Copy it from the address bar');
     }
   });
-  document.getElementById('save').addEventListener('click', () => {
+  // The map is the chart as drawn (SVG); the text is its entry (Markdown).
+  const download = (extension, type, contents, done) => {
     if (!current) return;
-    const slug = current.seed.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'island';
-    const url = URL.createObjectURL(new Blob([current.svg], { type: 'image/svg+xml' }));
+    const slug = current.seed.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60) || 'island';
+    const url = URL.createObjectURL(new Blob([contents(current)], { type }));
     const link = document.createElement('a');
     link.href = url;
-    link.download = `isolario-${slug}.svg`;
+    link.download = `isolario-${slug}.${extension}`;
     link.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
-    say('Chart saved');
+    say(done);
+  };
+  document.getElementById('save-map').addEventListener('click', () => {
+    download('svg', 'image/svg+xml', (c) => c.svg, 'Map saved');
+  });
+  document.getElementById('save-text').addEventListener('click', () => {
+    download('md', 'text/markdown', (c) => gazetteerMarkdown(c.island), 'Text saved');
   });
   document.addEventListener('keydown', (event) => {
     if (event.key !== 'n' || event.metaKey || event.ctrlKey || event.altKey) return;

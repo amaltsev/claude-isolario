@@ -90,7 +90,8 @@
   <span class="spacer"></span>
   <span class="status" id="status" role="status" aria-live="polite"></span>
   <button type="button" id="copy">Copy link</button>
-  <button type="button" id="save">Save chart</button>
+  <button type="button" id="save-map">Download map</button>
+  <button type="button" id="save-text">Download text</button>
 </form>
 <main class="entry" id="entry"></main>
 <footer class="colophon">
@@ -102,7 +103,7 @@
 </script>
 <script>
 (() => {
-  const { generateIsland, renderSVG, entryHTML, randomSeed } = Isolario;
+  const { generateIsland, renderSVG, entryHTML, gazetteerMarkdown, randomSeed } = Isolario;
   const entry = document.getElementById('entry');
   const input = document.getElementById('seed');
   const status = document.getElementById('status');
@@ -133,7 +134,7 @@
     entry.classList.remove('busy');
     const name = island.name.full.replace(/^the /, 'The ');
     document.title = `${name} · Isolario`;
-    current = { seed, svg };
+    current = { seed, svg, island };
   }
   function show(seed, immediately = false) {
     input.value = seed;
@@ -169,16 +170,23 @@
       say('Copy it from the address bar');
     }
   });
-  document.getElementById('save').addEventListener('click', () => {
+  // The map is the chart as drawn (SVG); the text is its entry (Markdown).
+  const download = (extension, type, contents, done) => {
     if (!current) return;
-    const slug = current.seed.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'island';
-    const url = URL.createObjectURL(new Blob([current.svg], { type: 'image/svg+xml' }));
+    const slug = current.seed.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60) || 'island';
+    const url = URL.createObjectURL(new Blob([contents(current)], { type }));
     const link = document.createElement('a');
     link.href = url;
-    link.download = `isolario-${slug}.svg`;
+    link.download = `isolario-${slug}.${extension}`;
     link.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
-    say('Chart saved');
+    say(done);
+  };
+  document.getElementById('save-map').addEventListener('click', () => {
+    download('svg', 'image/svg+xml', (c) => c.svg, 'Map saved');
+  });
+  document.getElementById('save-text').addEventListener('click', () => {
+    download('md', 'text/markdown', (c) => gazetteerMarkdown(c.island), 'Text saved');
   });
   document.addEventListener('keydown', (event) => {
     if (event.key !== 'n' || event.metaKey || event.ctrlKey || event.altKey) return;

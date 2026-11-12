@@ -17,7 +17,8 @@ The same seed always produces the same island, down to the last tree.
 
 Open `dist/isolario.html` in a browser. It is a single self-contained file with
 no network access: type a seed, or press <kbd>n</kbd> for another island. The
-seed lives in the URL, so a link is an island.
+seed lives in the URL, so a link is an island. **Download map** saves the chart
+as an SVG and **Download text** saves the entry as Markdown.
 
 Or use the command line (Node 20 or later, no dependencies to install):
 
@@ -26,6 +27,7 @@ node bin/isolario.js                         # a random island's gazetteer entry
 node bin/isolario.js "salt heron"            # the island for that seed
 node bin/isolario.js "salt heron" -o chart.svg
 node bin/isolario.js "salt heron" -o island.html   # chart and entry on one page
+node bin/isolario.js "salt heron" -o entry.md      # the entry as Markdown
 node bin/isolario.js "salt heron" -f json    # the surveyed facts
 node bin/isolario.js fleet -n 12 -o atlas.svg      # atlas-fleet-1.svg, ...
 ```

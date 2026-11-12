@@ -324,3 +324,16 @@ export function gazetteerText(island, width = 76) {
   }
   return out.join('\n');
 }
+
+/** Escape text for Markdown, so a seed like `*x*` or `a|b` reads as itself. */
+const md = (text) => String(text).replace(/\s+/g, ' ').replace(/[\\`*_[\]<>|#~]/g, '\\$&');
+
+/** The gazetteer entry as Markdown: one paragraph per line, facts as a list. */
+export function gazetteerMarkdown(island) {
+  const g = gazetteer(island);
+  const out = [`# ${md(g.title)}`, '', `*${md(g.subtitle)}*`, ''];
+  for (const [k, v] of g.table) out.push(`- **${md(k)}:** ${md(v)}`);
+  for (const s of g.sections) out.push('', `## ${md(s.heading)}`, '', md(s.text));
+  out.push('', '---', '', '*An entry from the Isolario, a book of islands that do not exist.*', '');
+  return out.join('\n');
+}
