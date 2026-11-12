@@ -155,9 +155,14 @@ export function traceRivers(terrain, { down, flux }, rng) {
 
   const xy = (i) => [i % N, Math.floor(i / N)];
   // Wander off the lattice a little so rivers do not betray the grid.
+  // A cell keeps its wobble, so a tributary meets its parent exactly.
+  const wobbled = new Map();
   const wobble = (i) => {
-    const [x, y] = xy(i);
-    return [x + rng.range(-0.3, 0.3), y + rng.range(-0.3, 0.3)];
+    if (!wobbled.has(i)) {
+      const [x, y] = xy(i);
+      wobbled.set(i, [x + rng.range(-0.3, 0.3), y + rng.range(-0.3, 0.3)]);
+    }
+    return wobbled.get(i);
   };
 
   const rivers = [];
@@ -196,7 +201,7 @@ export function traceRivers(terrain, { down, flux }, rng) {
     const end = down[start];
     const into = parent !== -1 ? 'river' : lake[end] ? 'lake' : 'sea';
     // Run on to the cell it drains into; the renderer clips at the shore.
-    points.push(xy(end));
+    points.push(into === 'river' ? wobble(end) : xy(end));
     fluxes.push(flux[start]);
     // The mouth proper is where the last reach crosses the waterline.
     const [ax, ay] = xy(start);

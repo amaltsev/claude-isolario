@@ -80,7 +80,7 @@ export function buildFeatures(terrain, hydro, rng) {
       moisture[i] = m;
       const feet = elev[i] * peakFeet;
       if (feet >= 1500 && elev[i] >= 0.3) relief[i] = RELIEF_MOUNTAIN;
-      else if ((feet >= 350 && elev[i] >= 0.13) || elev[i] >= 0.42) relief[i] = RELIEF_HILL;
+      else if ((feet >= 450 && elev[i] >= 0.16) || elev[i] >= 0.42) relief[i] = RELIEF_HILL;
       if (relief[i] === RELIEF_FLAT && elev[i] < 0.045 && m > 0.6 && (coastDist[i] < 7 || freshDist[i] < 3)) {
         cover[i] = COVER_MARSH;
       } else if (relief[i] !== RELIEF_MOUNTAIN && m > 0.57) {
