@@ -87,6 +87,7 @@ export function generateIsland(seed, { size = 200 } = {}) {
     ...r,
     index,
     lengthMiles: lineLength(r.points, false) * milesPerCell,
+    mouthQuarter: quarter({ x: r.mouth[0], y: r.mouth[1] }),
     name: null,
   }));
   const mains = rivers.filter((r) => r.parent === -1).sort((a, b) => b.lengthMiles - a.lengthMiles);

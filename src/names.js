@@ -28,7 +28,7 @@ const FLAVOURS = {
       mouth: ['Aber%', 'Inver%'],
       wood: ['Coed %', '% Wood', 'the Forest of %'],
       marsh: ['% Moss', 'the % Fens', 'Cors %'],
-      sea: ['Sea of %', 'the % Sound', 'Muir %', 'the % Deeps'],
+      sea: ['the Sea of %', 'the % Sound', 'Muir %', 'the % Deeps'],
     },
   },
   norn: {
@@ -52,7 +52,7 @@ const FLAVOURS = {
       mouth: ['%os', '%mouth'],
       wood: ['%skog', '% Wood', '%lund'],
       marsh: ['%myr', '% Moss'],
-      sea: ['%hav', 'the % Sound', 'Sea of %', 'the % Deeps'],
+      sea: ['%hav', 'the % Sound', 'the Sea of %', 'the % Deeps'],
     },
   },
   meridian: {
@@ -101,7 +101,7 @@ const FLAVOURS = {
       mouth: ['Ust-%', 'Usti %'],
       wood: ['% Les', '% Wood', '% Gaj'],
       marsh: ['% Blato', 'the % Mire'],
-      sea: ['% More', 'the % Sea', 'Sea of %'],
+      sea: ['% More', 'the % Sea', 'the Sea of %'],
     },
   },
   polyn: {
