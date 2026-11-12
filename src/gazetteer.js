@@ -328,12 +328,21 @@ export function gazetteerText(island, width = 76) {
 /** Escape text for Markdown, so a seed like `*x*` or `a|b` reads as itself. */
 const md = (text) => String(text).replace(/\s+/g, ' ').replace(/[\\`*_[\]<>|#~]/g, '\\$&');
 
-/** The gazetteer entry as Markdown: one paragraph per line, facts as a list. */
-export function gazetteerMarkdown(island) {
+/** A URL made safe to sit inside a Markdown link's parentheses. */
+const mdUrl = (url) =>
+  String(url).replace(/[()<>\s\\]/g, (c) => (c === '(' ? '%28' : c === ')' ? '%29' : encodeURIComponent(c)));
+
+/**
+ * The gazetteer entry as Markdown: one paragraph per line, facts as a list.
+ * Give `link` (where this island can be opened with its chart) and the
+ * closing line points there.
+ */
+export function gazetteerMarkdown(island, { link } = {}) {
   const g = gazetteer(island);
   const out = [`# ${md(g.title)}`, '', `*${md(g.subtitle)}*`, ''];
   for (const [k, v] of g.table) out.push(`- **${md(k)}:** ${md(v)}`);
   for (const s of g.sections) out.push('', `## ${md(s.heading)}`, '', md(s.text));
-  out.push('', '---', '', '*An entry from the Isolario, a book of islands that do not exist.*', '');
+  const more = link ? ` [Open this entry with its chart](${mdUrl(link)}).` : '';
+  out.push('', '---', '', `*An entry from the Isolario, a book of islands that do not exist.${more}*`, '');
   return out.join('\n');
 }

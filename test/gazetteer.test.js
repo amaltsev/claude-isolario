@@ -84,6 +84,19 @@ test('markdown carries the whole entry, one paragraph per line', () => {
   assert.equal(gazetteerMarkdown(island('tern')), gazetteerMarkdown(island('tern')));
 });
 
+test('markdown links back to the island only when told where it lives', () => {
+  const is = island('tern');
+  const closing = (text) => text.trimEnd().split('\n').at(-1);
+  assert.equal(closing(gazetteerMarkdown(is)), '*An entry from the Isolario, a book of islands that do not exist.*');
+  assert.ok(!gazetteerMarkdown(is).includes(']('));
+  assert.equal(
+    closing(gazetteerMarkdown(is, { link: 'https://example.org/isolario.html#tern' })),
+    '*An entry from the Isolario, a book of islands that do not exist. [Open this entry with its chart](https://example.org/isolario.html#tern).*',
+  );
+  const awkward = gazetteerMarkdown(is, { link: 'https://example.org/a (b)<c>#x' });
+  assert.ok(awkward.includes('](https://example.org/a%20%28b%29%3Cc%3E#x).*'));
+});
+
 test('markdown escapes seeds that look like markup', () => {
   const text = gazetteerMarkdown(generateIsland('*bold* | `tick` <b>\n# heading', { size: 100 }));
   assert.ok(text.includes('- **Seed:** \\*bold\\* \\| \\`tick\\` \\<b\\> \\# heading'));
