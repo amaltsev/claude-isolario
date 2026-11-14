@@ -3,7 +3,7 @@
 *A book of islands that do not exist.*
 
 An **isolario** was a Renaissance "book of islands": page after page of charts,
-each with a few paragraphs on harbours, hazards and local custom. This one writes
+each with a few paragraphs on harbors, hazards and local custom. This one writes
 itself. Give it any text as a seed and it surveys an island: coastline, rivers,
 mountains, towns, roads and place names in the island's own invented language.
 It then draws the chart as a hand-inked SVG and writes the pilot-book entry to
@@ -51,7 +51,7 @@ same model the chart is drawn from. When the entry for seed `f` says Invermolael
 the south coast and that river does reach the sea beside it. Areas, coast lengths, heights,
 bearings, river lengths and populations are all measured.
 
-Only the colour is invented: what the islanders export, how deep the anchorage
+Only the color is invented: what the islanders export, how deep the anchorage
 is, why nobody passes the standing stones after dark.
 
 ## How an island is made
@@ -63,11 +63,11 @@ disturbs another.
 | --- | --- | --- |
 | Terrain | `src/terrain.js` | One of five shapes (round, long, crescent, twin, shattered) built from soft blobs and fractal noise. The sea level is set at the quantile that leaves the chosen share of the sheet dry. |
 | Coast | `src/contour.js` | Marching squares, with saddle handling, turns the height field into closed coastlines. |
-| Water | `src/hydrology.js` | A priority flood fills pits, every cell drains to its steepest lower neighbour, and cells that gather enough flow become rivers. |
+| Water | `src/hydrology.js` | A priority flood fills pits, every cell drains to its steepest lower neighbor, and cells that gather enough flow become rivers. |
 | Features | `src/features.js` | Woods, marsh, hills and mountains; summits, headlands and bays measured from the terrain. |
-| Names | `src/names.js` | Six language flavours, each thinned to a random subset of its sounds, so every island has its own accent. A town at a river mouth can take the river's name. |
+| Names | `src/names.js` | Six language flavors, each thinned to a random subset of its sounds, so every island has its own accent. A town at a river mouth can take the river's name. |
 | Settlement | `src/settlements.js` | Towns sited by shelter and fresh water, joined by roads routed with A\* that prefer ground already trodden. |
-| Chart | `src/render.js` | Masked shore ripples, colour washes, hatched mountains, collision-aware lettering, compass rose, scale bar and cartouche. |
+| Chart | `src/render.js` | Masked shore ripples, color washes, hatched mountains, collision-aware lettering, compass rose, scale bar and cartouche. |
 | Entry | `src/gazetteer.js` | The pilot-book prose. |
 
 `src/island.js` ties the stages together, and `src/page.js` lays chart and entry
@@ -99,9 +99,28 @@ design, the code, the tests and the voice of the gazetteer. No line of it was
 written by hand. The commit history follows the phases it was built in.
 
 The person who asked steered the later details: the download buttons, the
-Markdown entry and the licence.
+Markdown entry and the license.
 
-## Licence
+### A note on spelling
+
+Nobody asked for British English, yet the code comments, some identifiers
+(`summarise`, `capitalise`) and a few words of the entries ("neighbours",
+"north-east") came out that way. This README has since been changed to US
+spelling. The rest was left as written.
+
+Claude's own best guess at why is that the subject chose the spelling. The
+pilot books the gazetteer imitates are, in their best-known form, the British
+Admiralty's *Sailing Directions*. The invented languages draw on Gaelic,
+Norse and English place names, so an island gets a Water, a Barrow or a set
+of Skerries. Once the project was framed as charts and sailing directions,
+British spelling turned up from the first file written, before any gazetteer
+code existed. It was a habit, not a decision, and it is not even consistent:
+the tests say "checkerboard", not "chequerboard".
+
+The voice of the entries doesn't depend on it. Fathoms, leagues, "souls" and
+"ready to weigh" read the same in either spelling.
+
+## License
 
 Everything here is dedicated to the public domain under
 [CC0 1.0](LICENSE): the code, and every map and text it makes. Use them for
