@@ -15,11 +15,13 @@ The same seed always produces the same island, down to the last tree.
 
 ## Try it
 
-Open `dist/isolario.html` in a browser. It is a single self-contained file with
-no network access: type a seed, or press <kbd>n</kbd> for another island. The
-seed lives in the URL, so a link is an island. **Download map** saves the chart
-as an SVG and **Download text** saves the entry as Markdown. When the page is
-served over HTTP, the Markdown ends with a link back to the island.
+The explorer is online at <https://amaltsev.github.io/claude-isolario/>.
+To run it locally, open `dist/isolario.html` in a browser. It is a single
+self-contained file with no network access: type a seed, or press <kbd>n</kbd>
+for another island. The seed lives in the URL, so a link is an island.
+**Download map** saves the chart as an SVG and **Download text** saves the
+entry as Markdown. When the page is served over HTTP, the Markdown ends with a
+link back to the island.
 
 Or use the command line (Node 20 or later, no dependencies to install):
 
